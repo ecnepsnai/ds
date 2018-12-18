@@ -1,6 +1,7 @@
 package ds
 
 import (
+	"os"
 	"path"
 	"testing"
 )
@@ -75,6 +76,17 @@ func TestRegisterNoFields(t *testing.T) {
 	}
 }
 
+func TestRegisterOtherTags(t *testing.T) {
+	type exampleType struct {
+		Primary       string `ds:"primary"`
+		SomethingElse string `json:"something_else"`
+	}
+
+	if _, err := Register(exampleType{}, path.Join(tmpDir, randomString(12))); err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+}
+
 func TestRegisterUnknownStructTag(t *testing.T) {
 	type exampleType struct {
 		Unknown string `ds:"💩"`
@@ -98,5 +110,68 @@ func TestRegisterPointer(t *testing.T) {
 
 	if _, err := Register(&object, path.Join(tmpDir, randomString(12))); err == nil {
 		t.Errorf("No error seen while attempting to register pointer")
+	}
+}
+
+func TestRegisterOpenClose(t *testing.T) {
+	primaryKey := randomString(12)
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+	dsPath := path.Join(tmpDir, randomString(12))
+
+	table, err := Register(exampleType{}, dsPath)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	err = table.Add(exampleType{
+		Primary: primaryKey,
+		Index:   randomString(12),
+		Unique:  randomString(12),
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	table.Close()
+	table = nil
+
+	table, err = Register(exampleType{}, dsPath)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	v, err := table.Get(primaryKey)
+	if err != nil {
+		t.Errorf("Error getting object: %s", err.Error())
+	}
+	got := v.(exampleType).Primary
+	if got != primaryKey {
+		t.Errorf("Incorrect primary key returned. Expected '%s' got '%s", primaryKey, got)
+	}
+}
+
+func TestRegisterLockedFile(t *testing.T) {
+	dsPath := path.Join(tmpDir, randomString(12))
+	file, err := os.OpenFile(dsPath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		t.Errorf("Error making test file: %s", err.Error())
+	}
+	file.Close()
+
+	if err := os.Chmod(dsPath, 0000); err != nil {
+		t.Errorf("Error locking test file: %s", err.Error())
+	}
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+	if _, err := Register(exampleType{}, dsPath); err == nil {
+		t.Errorf("No error seen while attempting to open file without permission")
 	}
 }
