@@ -38,6 +38,12 @@ func Register(o interface{}, filePath string) (*Table, error) {
 	for i < numFields {
 		field := typeOf.Field(i)
 		tag := field.Tag.Get("ds")
+		if len(tag) == 0 {
+			i++
+			continue
+		}
+		table.log.Debug("Field: %s, tag: %s", field.Name, tag)
+
 		if strings.Contains(tag, "primary") {
 			if len(primaryKey) > 0 {
 				table.log.Error("Cannot specify multiple primary keys")
@@ -53,8 +59,8 @@ func Register(o interface{}, filePath string) (*Table, error) {
 			table.log.Debug("Adding unique field '%s'", field.Name)
 			uniques = append(uniques, field.Name)
 		} else {
-			table.log.Error("Unknown struct tag '%s'", tag)
-			return nil, fmt.Errorf("Unknown struct tag '%s'", tag)
+			table.log.Error("Unknown struct tag '%s' on field '%s'", tag, field.Name)
+			return nil, fmt.Errorf("Unknown struct tag '%s' on field '%s'", tag, field.Name)
 		}
 
 		i++
