@@ -121,3 +121,25 @@ func (table *Table) GetUnique(fieldName string, value interface{}) (interface{},
 
 	return table.getPrimaryKey(primaryKeyData)
 }
+
+// GetAll will get all of the entries in the table.
+func (table *Table) GetAll() ([]interface{}, error) {
+	var entires []interface{}
+	err := table.data.View(func(tx *bolt.Tx) error {
+		dataBucket := tx.Bucket([]byte("data"))
+		return dataBucket.ForEach(func(k []byte, v []byte) error {
+			value, err := table.gobDecodeValue(v)
+			if err != nil {
+				table.log.Error("Error decoding value: %s", err.Error())
+				return err
+			}
+			entires = append(entires, value.Interface())
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return entires, nil
+}
