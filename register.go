@@ -103,14 +103,16 @@ func Register(o interface{}, filePath string) (*Table, error) {
 	// registering the type panics.
 	registerType(o)
 
+	table.log.Info("Datastore '%s' opened at '%s'", table.Name, filePath)
+
 	return &table, nil
 }
 
 func registerType(o interface{}) {
-	defer recoverRegisterType()
+	defer panicRecovery()
 	gob.Register(o)
 }
 
-func recoverRegisterType() {
+func panicRecovery() {
 	recover()
 }

@@ -19,6 +19,18 @@ type Table struct {
 	data       *bolt.DB
 }
 
+// Close will close the table. This will not panic if the table has not been opened or already been closed.
+func (table *Table) Close() {
+	if table.data != nil {
+		go tryCloseData(table.data)
+	}
+}
+
+func tryCloseData(data *bolt.DB) {
+	defer panicRecovery()
+	data.Close()
+}
+
 // IsIndexed is the given field indexes
 func (table *Table) IsIndexed(field string) bool {
 	for _, index := range table.indexes {
