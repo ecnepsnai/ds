@@ -19,6 +19,15 @@ type Table struct {
 	data       *bolt.DB
 }
 
+// Config describes ds table configuration
+type Config struct {
+	Name       string
+	TypeOf     string
+	PrimaryKey string
+	Indexes    []string
+	Uniques    []string
+}
+
 // Close will close the table. This will not panic if the table has not been opened or already been closed.
 func (table *Table) Close() {
 	if table.data != nil {

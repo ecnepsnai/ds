@@ -35,3 +35,14 @@ func (table *Table) gobDecodeValue(b []byte) (reflect.Value, error) {
 	}
 	return value, nil
 }
+
+func gobDecodeConfig(b []byte) (*Config, error) {
+	var w = Config{}
+
+	reader := bytes.NewReader(b)
+	dec := gob.NewDecoder(reader)
+	if err := dec.Decode(&w); err != nil {
+		return nil, err
+	}
+	return &w, nil
+}

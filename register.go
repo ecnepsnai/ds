@@ -20,6 +20,12 @@ func Register(o interface{}, filePath string) (*Table, error) {
 		return nil, fmt.Errorf("Unknown object type provided. Did you pass a pointer?")
 	}
 
+	// Gob will panic if you register the same object twice.
+	// I think this is stupid, so we will recover from this if
+	// registering the type panics.
+	registerGobType(o)
+	registerGobType(Config{})
+
 	table := Table{
 		Name:   typeOf.Name(),
 		typeOf: typeOf,
@@ -83,12 +89,43 @@ func Register(o interface{}, filePath string) (*Table, error) {
 	table.data = data
 
 	err = data.Update(func(tx *bolt.Tx) error {
-		tx.CreateBucketIfNotExists([]byte("data"))
+		_, err = tx.CreateBucketIfNotExists([]byte("data"))
+		if err != nil {
+			table.log.Error("Error creating bucket '%s: %s", "data", err.Error())
+			return err
+		}
 		for _, index := range indexes {
-			tx.CreateBucketIfNotExists([]byte("index:" + index))
+			_, err = tx.CreateBucketIfNotExists([]byte("index:" + index))
+			if err != nil {
+				table.log.Error("Error creating bucket '%s: %s", "index:"+index, err.Error())
+				return err
+			}
 		}
 		for _, unique := range uniques {
-			tx.CreateBucketIfNotExists([]byte("unique:" + unique))
+			_, err = tx.CreateBucketIfNotExists([]byte("unique:" + unique))
+			if err != nil {
+				table.log.Error("Error creating bucket '%s: %s", "unique:"+unique, err.Error())
+				return err
+			}
+		}
+
+		configBucket, err := tx.CreateBucketIfNotExists([]byte("config"))
+		if err != nil {
+			table.log.Error("Error creating bucket 'config': %s", err.Error())
+			return err
+		}
+		data, err := gobEncode(Config{
+			Name:       table.Name,
+			TypeOf:     table.typeOf.Name(),
+			PrimaryKey: primaryKey,
+			Indexes:    indexes,
+			Uniques:    uniques,
+		})
+		if err != nil {
+			return err
+		}
+		if err := configBucket.Put([]byte("config"), data); err != nil {
+			return err
 		}
 
 		return nil
@@ -98,17 +135,12 @@ func Register(o interface{}, filePath string) (*Table, error) {
 		return nil, err
 	}
 
-	// Gob will panic if you register the same object twice.
-	// I think this is stupid, so we will recover from this if
-	// registering the type panics.
-	registerType(o)
-
 	table.log.Info("Datastore '%s' opened at '%s'", table.Name, filePath)
 
 	return &table, nil
 }
 
-func registerType(o interface{}) {
+func registerGobType(o interface{}) {
 	defer panicRecovery()
 	gob.Register(o)
 }
