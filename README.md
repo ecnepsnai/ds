@@ -60,6 +60,9 @@ object := value.(exampleType)
 
 ## Get Multiple Objects
 
+`GetIndex` returns an unsorted slice. Use `GetIndexSorted` to return based on the insertion order from
+newest to oldest.
+
 ```golang
 values, err := table.GetIndex("Index", "bar")
 if err != nil {

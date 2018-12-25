@@ -46,3 +46,14 @@ func gobDecodeConfig(b []byte) (*Config, error) {
 	}
 	return &w, nil
 }
+
+func gobDecodeOptions(b []byte) (*Options, error) {
+	var w = Options{}
+
+	reader := bytes.NewReader(b)
+	dec := gob.NewDecoder(reader)
+	if err := dec.Decode(&w); err != nil {
+		return nil, err
+	}
+	return &w, nil
+}

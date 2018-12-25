@@ -12,7 +12,7 @@ func TestAdd(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -34,7 +34,7 @@ func TestAddIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -61,7 +61,7 @@ func TestAddTypeMismatch(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -87,7 +87,7 @@ func TestAddDuplicatePrimaryKey(t *testing.T) {
 
 	primaryKey := randomString(12)
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -120,7 +120,7 @@ func TestAddDuplicateUnique(t *testing.T) {
 
 	unique := randomString(12)
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}

@@ -13,7 +13,7 @@ import (
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
 // at the specified file path.
-func Register(o interface{}, filePath string) (*Table, error) {
+func Register(o interface{}, filePath string, options *Options) (*Table, error) {
 	typeOf := reflect.TypeOf(o)
 	// TypeOf returns and empty string '' if you pass a pointer
 	if len(typeOf.Name()) <= 0 {
@@ -24,12 +24,16 @@ func Register(o interface{}, filePath string) (*Table, error) {
 	// I think this is stupid, so we will recover from this if
 	// registering the type panics.
 	registerGobType(o)
+	registerGobType(Options{})
 	registerGobType(Config{})
 
 	table := Table{
 		Name:   typeOf.Name(),
 		typeOf: typeOf,
 		log:    logtic.Connect("ds(" + typeOf.Name() + ")"),
+	}
+	if options != nil {
+		table.options = *options
 	}
 
 	var primaryKey string
@@ -89,49 +93,43 @@ func Register(o interface{}, filePath string) (*Table, error) {
 	table.data = data
 
 	err = data.Update(func(tx *bolt.Tx) error {
-		_, err = tx.CreateBucketIfNotExists([]byte("data"))
+		if err := table.initalizeConfig(tx); err != nil {
+			table.log.Error("Error initializing config: %s", err.Error())
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists(dataKey)
 		if err != nil {
 			table.log.Error("Error creating bucket '%s: %s", "data", err.Error())
 			return err
 		}
-		for _, index := range indexes {
-			_, err = tx.CreateBucketIfNotExists([]byte("index:" + index))
+		if !table.options.DisableSorting {
+			_, err = tx.CreateBucketIfNotExists(insertOrderKey)
 			if err != nil {
-				table.log.Error("Error creating bucket '%s: %s", "index:"+index, err.Error())
+				table.log.Error("Error creating bucket '%s: %s", "insert_index", err.Error())
+				return err
+			}
+		}
+		for _, index := range indexes {
+			_, err = tx.CreateBucketIfNotExists([]byte(indexPrefix + index))
+			if err != nil {
+				table.log.Error("Error creating bucket '%s: %s", indexPrefix+index, err.Error())
 				return err
 			}
 		}
 		for _, unique := range uniques {
-			_, err = tx.CreateBucketIfNotExists([]byte("unique:" + unique))
+			_, err = tx.CreateBucketIfNotExists([]byte(uniquePrefix + unique))
 			if err != nil {
-				table.log.Error("Error creating bucket '%s: %s", "unique:"+unique, err.Error())
+				table.log.Error("Error creating bucket '%s: %s", uniquePrefix+unique, err.Error())
 				return err
 			}
-		}
-
-		configBucket, err := tx.CreateBucketIfNotExists([]byte("config"))
-		if err != nil {
-			table.log.Error("Error creating bucket 'config': %s", err.Error())
-			return err
-		}
-		data, err := gobEncode(Config{
-			Name:       table.Name,
-			TypeOf:     table.typeOf.Name(),
-			PrimaryKey: primaryKey,
-			Indexes:    indexes,
-			Uniques:    uniques,
-		})
-		if err != nil {
-			return err
-		}
-		if err := configBucket.Put([]byte("config"), data); err != nil {
-			return err
 		}
 
 		return nil
 	})
 	if err != nil {
 		table.log.Error("Error preparing bolt database: %s", err.Error())
+		data.Close()
 		return nil, err
 	}
 

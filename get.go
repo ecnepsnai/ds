@@ -1,7 +1,10 @@
 package ds
 
 import (
+	"encoding/binary"
 	"fmt"
+	"reflect"
+	"sort"
 
 	"github.com/boltdb/bolt"
 )
@@ -24,7 +27,7 @@ func (table *Table) Get(primaryKey interface{}) (interface{}, error) {
 func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 	var data []byte
 	err := table.data.View(func(tx *bolt.Tx) error {
-		dataBucket := tx.Bucket([]byte("data"))
+		dataBucket := tx.Bucket(dataKey)
 		data = dataBucket.Get(key)
 		return nil
 	})
@@ -45,6 +48,7 @@ func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 }
 
 // GetIndex will get multiple entries that contain the same value for the specified indexed field.
+// Result is not ordered. Use GetIndexSorted to return a sorted slice.
 // Returns an empty array if nothing found.
 func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}, error) {
 	if !table.IsIndexed(fieldName) {
@@ -60,7 +64,7 @@ func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}
 
 	var primaryKeysData []byte
 	err = table.data.View(func(tx *bolt.Tx) error {
-		indexBucket := tx.Bucket([]byte("index:" + fieldName))
+		indexBucket := tx.Bucket([]byte(indexPrefix + fieldName))
 		primaryKeysData = indexBucket.Get(indexValueBytes)
 		return nil
 	})
@@ -91,6 +95,69 @@ func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}
 	return values, nil
 }
 
+// GetIndexSorted will get multiple entries that contain the same value for the specified indexed field
+// sorted by their insertion.
+// Retuns an empty array if nothing found.
+func (table *Table) GetIndexSorted(fieldName string, value interface{}) ([]interface{}, error) {
+	if table.options.DisableSorting {
+		table.log.Error("Call GetIndexSorted on non-sorted table")
+		return nil, fmt.Errorf("Call GetIndexSorted on non-sorted table")
+	}
+
+	objects, err := table.GetIndex(fieldName, value)
+	if err != nil {
+		return nil, err
+	}
+	if len(objects) == 0 {
+		return objects, nil
+	}
+
+	orderMap := map[uint64]interface{}{}
+	err = table.data.View(func(tx *bolt.Tx) error {
+		for _, object := range objects {
+			index, err := table.indexForObject(tx, object)
+			if err != nil {
+				return err
+			}
+			orderMap[index] = object
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// To store the keys in slice in sorted order
+	var keys []uint64
+	for k := range orderMap {
+		keys = append(keys, k)
+	}
+	sort.SliceStable(keys, func(i int, j int) bool { return keys[i] < keys[j] })
+
+	var sortedObject = make([]interface{}, len(keys))
+	for i, key := range keys {
+		sortedObject[i] = orderMap[key]
+	}
+
+	return sortedObject, nil
+}
+
+func (table *Table) indexForObject(tx *bolt.Tx, object interface{}) (uint64, error) {
+	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
+	pkBytes, err := gobEncode(pk)
+	if err != nil {
+		return 0, err
+	}
+	indexBucket := tx.Bucket(insertOrderKey)
+	b := indexBucket.Get(pkBytes)
+	index := binary.LittleEndian.Uint64(b)
+	if err != nil {
+		return 0, err
+	}
+	return index, nil
+}
+
 // GetUnique will get a single entry based on the value of the provided unique field.
 // Returns (nil, nil) if nothing found.
 func (table *Table) GetUnique(fieldName string, value interface{}) (interface{}, error) {
@@ -107,7 +174,7 @@ func (table *Table) GetUnique(fieldName string, value interface{}) (interface{},
 
 	var primaryKeyData []byte
 	err = table.data.View(func(tx *bolt.Tx) error {
-		uniqueBucket := tx.Bucket([]byte("unique:" + fieldName))
+		uniqueBucket := tx.Bucket([]byte(uniquePrefix + fieldName))
 		primaryKeyData = uniqueBucket.Get(uniqueValueBytes)
 		return nil
 	})
@@ -126,7 +193,7 @@ func (table *Table) GetUnique(fieldName string, value interface{}) (interface{},
 func (table *Table) GetAll() ([]interface{}, error) {
 	var entires []interface{}
 	err := table.data.View(func(tx *bolt.Tx) error {
-		dataBucket := tx.Bucket([]byte("data"))
+		dataBucket := tx.Bucket(dataKey)
 		return dataBucket.ForEach(func(k []byte, v []byte) error {
 			value, err := table.gobDecodeValue(v)
 			if err != nil {

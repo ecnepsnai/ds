@@ -16,7 +16,7 @@ Register your object:
         Unique  string `ds:"unique"`
     }
 
-    table, err := ds.Register(exampleType{}, "./data.db");
+    table, err := ds.Register(exampleType{}, "./data.db", nil);
     if err != nil {
         panic("Error registering table: %s", err.Error())
     }
@@ -48,6 +48,9 @@ Get single:
     object := value.(exampleType)
 
 Get Multiple:
+
+`GetIndex` returns an unsorted slice. Use `GetIndexSorted` to return based on the insertion order from
+newest to oldest.
 
     values, err := table.GetIndex("Index", "bar")
     if err != nil {

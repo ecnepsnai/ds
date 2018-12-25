@@ -16,6 +16,17 @@ func (table *Table) Delete(o interface{}) error {
 		return fmt.Errorf("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}
 
+	err := table.data.Update(func(tx *bolt.Tx) error {
+		return table.delete(tx, o)
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (table *Table) delete(tx *bolt.Tx, o interface{}) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
@@ -24,79 +35,77 @@ func (table *Table) Delete(o interface{}) error {
 		return err
 	}
 
-	err = table.data.Update(func(tx *bolt.Tx) error {
-		dataBucket := tx.Bucket([]byte("data"))
-		dataBucket.Delete(primaryKeyBytes)
+	dataBucket := tx.Bucket(dataKey)
+	dataBucket.Delete(primaryKeyBytes)
 
-		for _, index := range table.indexes {
-			indexValue := valueOf.FieldByName(index)
-			indexValueBytes, err := gobEncode(indexValue.Interface())
-			if err != nil {
-				table.log.Error("Error encoding value for field '%s': %s", index, err.Error())
-				return err
-			}
-
-			indexBucket := tx.Bucket([]byte("index:" + index))
-			var primaryKeys [][]byte
-			if data := indexBucket.Get(indexValueBytes); data != nil {
-				pk, err := gobDecodePrimaryKeyList(data)
-				if err != nil {
-					table.log.Error("Error decoding primary key list for index '%s': %s", index, err.Error())
-					return err
-				}
-				primaryKeys = pk
-			} else {
-				continue
-			}
-
-			if len(primaryKeys) == 1 {
-				if err := indexBucket.Delete(indexValueBytes); err != nil {
-					table.log.Error("Error removing index '%s': %s", index, err.Error())
-					return err
-				}
-				table.log.Debug("Updating index '%s'. Key count: 0", index)
-				continue
-			}
-
-			pkIndex := indexOf(primaryKeys, primaryKeyBytes)
-			if pkIndex == -1 {
-				table.log.Warn("Primary key not found in index '%s'", index)
-				continue
-			}
-			primaryKeys[pkIndex] = primaryKeys[len(primaryKeys)-1]
-			primaryKeys = primaryKeys[:len(primaryKeys)-1]
-			table.log.Debug("Updating index '%s'. Key count: %d", index, len(primaryKeys))
-			pkListBytes, err := gobEncode(primaryKeys)
-			if err != nil {
-				table.log.Error("Error encoding primary key list for index '%s': %s", index, err.Error())
-				return err
-			}
-			if err := indexBucket.Put(indexValueBytes, pkListBytes); err != nil {
-				table.log.Error("Error updating index '%s': %s", index, err.Error())
-				return err
-			}
+	for _, index := range table.indexes {
+		indexValue := valueOf.FieldByName(index)
+		indexValueBytes, err := gobEncode(indexValue.Interface())
+		if err != nil {
+			table.log.Error("Error encoding value for field '%s': %s", index, err.Error())
+			return err
 		}
 
-		for _, unique := range table.uniques {
-			uniqueValue := valueOf.FieldByName(unique)
-			uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
+		indexBucket := tx.Bucket([]byte(indexPrefix + index))
+		var primaryKeys [][]byte
+		if data := indexBucket.Get(indexValueBytes); data != nil {
+			pk, err := gobDecodePrimaryKeyList(data)
 			if err != nil {
-				table.log.Error("Error encoding value for field '%s': %s", unique, err.Error())
+				table.log.Error("Error decoding primary key list for index '%s': %s", index, err.Error())
 				return err
 			}
-
-			uniqueBucket := tx.Bucket([]byte("unique:" + unique))
-			table.log.Debug("Updating unique '%s'", unique)
-			if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
-				table.log.Error("Error removing unique '%s': %s", unique, err.Error())
-				return err
-			}
+			primaryKeys = pk
+		} else {
+			continue
 		}
 
-		return nil
-	})
-	if err != nil {
-		return err
+		if len(primaryKeys) == 1 {
+			if err := indexBucket.Delete(indexValueBytes); err != nil {
+				table.log.Error("Error removing index '%s': %s", index, err.Error())
+				return err
+			}
+			table.log.Debug("Updating index '%s'. Key count: 0", index)
+			continue
+		}
+
+		pkIndex := indexOf(primaryKeys, primaryKeyBytes)
+		if pkIndex == -1 {
+			table.log.Warn("Primary key not found in index '%s'", index)
+			continue
+		}
+		primaryKeys[pkIndex] = primaryKeys[len(primaryKeys)-1]
+		primaryKeys = primaryKeys[:len(primaryKeys)-1]
+		table.log.Debug("Updating index '%s'. Key count: %d", index, len(primaryKeys))
+		pkListBytes, err := gobEncode(primaryKeys)
+		if err != nil {
+			table.log.Error("Error encoding primary key list for index '%s': %s", index, err.Error())
+			return err
+		}
+		if err := indexBucket.Put(indexValueBytes, pkListBytes); err != nil {
+			table.log.Error("Error updating index '%s': %s", index, err.Error())
+			return err
+		}
+	}
+
+	for _, unique := range table.uniques {
+		uniqueValue := valueOf.FieldByName(unique)
+		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
+		if err != nil {
+			table.log.Error("Error encoding value for field '%s': %s", unique, err.Error())
+			return err
+		}
+
+		uniqueBucket := tx.Bucket([]byte(uniquePrefix + unique))
+		table.log.Debug("Updating unique '%s'", unique)
+		if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
+			table.log.Error("Error removing unique '%s': %s", unique, err.Error())
+			return err
+		}
+	}
+
+	if !table.options.DisableSorting {
+		indexBucket := tx.Bucket(insertOrderKey)
+		indexBucket.Delete(primaryKeyBytes)
 	}
 
 	return nil

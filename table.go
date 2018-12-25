@@ -17,15 +17,7 @@ type Table struct {
 	indexes    []string
 	uniques    []string
 	data       *bolt.DB
-}
-
-// Config describes ds table configuration
-type Config struct {
-	Name       string
-	TypeOf     string
-	PrimaryKey string
-	Indexes    []string
-	Uniques    []string
+	options    Options
 }
 
 // Close will close the table. This will not panic if the table has not been opened or already been closed.

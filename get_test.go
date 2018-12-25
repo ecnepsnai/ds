@@ -13,7 +13,7 @@ func TestGet(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -45,7 +45,7 @@ func TestGetIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -73,6 +73,62 @@ func TestGetIndex(t *testing.T) {
 	}
 }
 
+func TestGetIndexSorted(t *testing.T) {
+	index := randomString(12)
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	i := 0
+	count := 100
+	for i < count {
+		err = table.Add(exampleType{
+			Primary: randomString(12),
+			Index:   index,
+			Unique:  randomString(12),
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		i++
+	}
+
+	objects, err := table.GetIndexSorted("Index", index)
+	if err != nil {
+		t.Errorf("Error getting many objects: %s", err.Error())
+	}
+	if len(objects) != count {
+		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+	}
+}
+
+func TestGetIndexSortedNonSortedTable(t *testing.T) {
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), &Options{
+		DisableSorting: true,
+	})
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	_, err = table.GetIndexSorted("Index", "")
+	if err == nil {
+		t.Errorf("No error seen while getting sorted on nonsorted table")
+	}
+}
+
 func TestGetUnique(t *testing.T) {
 	unique := randomString(12)
 	type exampleType struct {
@@ -81,7 +137,7 @@ func TestGetUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -112,7 +168,7 @@ func TestGetNilPrimaryKey(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -133,7 +189,7 @@ func TestGetNonindexedField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -154,7 +210,7 @@ func TestGetNonuniqueField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -175,7 +231,7 @@ func TestGetAll(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -200,5 +256,42 @@ func TestGetAll(t *testing.T) {
 	}
 	if len(objects) != count {
 		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+	}
+}
+
+func TestGetNoResults(t *testing.T) {
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	object, err := table.Get(randomString(12))
+	if err != nil {
+		t.Errorf("Unexpected error getting item: %s", err.Error())
+	}
+	if object != nil {
+		t.Error("Object(s) returned when expected nil")
+	}
+
+	objects, err := table.GetIndex("Index", randomString(12))
+	if err != nil {
+		t.Errorf("Unexpected error getting item: %s", err.Error())
+	}
+	if len(objects) > 0 {
+		t.Error("Object(s) returned when expected nil")
+	}
+
+	object, err = table.GetUnique("Unique", randomString(12))
+	if err != nil {
+		t.Errorf("Unexpected error getting item: %s", err.Error())
+	}
+	if object != nil {
+		t.Error("Object(s) returned when expected nil")
 	}
 }

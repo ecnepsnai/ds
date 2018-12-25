@@ -13,7 +13,7 @@ func TestDelete(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -42,7 +42,7 @@ func TestDeleteIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -74,7 +74,7 @@ func TestDeleteNotSaved(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -96,7 +96,7 @@ func TestDeleteTypeMismatch(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)))
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}

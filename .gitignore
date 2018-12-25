@@ -1,2 +1,4 @@
 vendor/
 .DS_Store
+cmd/*/*
+!cmd/*/*.go
