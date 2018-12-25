@@ -32,7 +32,8 @@ func main() {
 		printHelpAndExit()
 	}
 
-	if _, err := os.Stat(tablePath); err != nil {
+	info, err := os.Stat(tablePath)
+	if err != nil {
 		fmt.Printf("%s file not found or accessible\n", tablePath)
 		os.Exit(1)
 	}
@@ -46,40 +47,42 @@ func main() {
 		run(tx)
 		return nil
 	})
+	data.Close()
+	fmt.Printf("Store Size: %d\n", info.Size())
 }
 
-type Bucket struct {
+type bucket struct {
 	Bucket *bolt.Bucket
 	Name   string
 }
 
 func run(tx *bolt.Tx) {
-	var indexBuckets []Bucket
-	var uniqueBuckets []Bucket
-	var dataBucket Bucket
-	var configBucket Bucket
+	var indexBuckets []bucket
+	var uniqueBuckets []bucket
+	var dataBucket bucket
+	var configBucket bucket
 
 	// Find all buckets
 	tx.ForEach(func(name []byte, b *bolt.Bucket) error {
 		bucketName := string(name)
 
 		if strings.HasPrefix(bucketName, "index:") {
-			indexBuckets = append(indexBuckets, Bucket{
+			indexBuckets = append(indexBuckets, bucket{
 				Bucket: b,
 				Name:   bucketName,
 			})
 		} else if strings.HasPrefix(bucketName, "unique:") {
-			uniqueBuckets = append(uniqueBuckets, Bucket{
+			uniqueBuckets = append(uniqueBuckets, bucket{
 				Bucket: b,
 				Name:   bucketName,
 			})
 		} else if bucketName == "data" {
-			dataBucket = Bucket{
+			dataBucket = bucket{
 				Bucket: b,
 				Name:   bucketName,
 			}
 		} else if bucketName == "config" {
-			configBucket = Bucket{
+			configBucket = bucket{
 				Bucket: b,
 				Name:   bucketName,
 			}
@@ -95,6 +98,23 @@ func run(tx *bolt.Tx) {
 	})
 	fmt.Printf("Total entries: %d\n", entryCount)
 
+	indexCount := 0
+	for _, bucket := range indexBuckets {
+		bucket.Bucket.ForEach(func(k []byte, v []byte) error {
+			indexCount++
+			return nil
+		})
+	}
+	fmt.Printf("Total Indexes: %d\n", indexCount)
+	uniqueCount := 0
+	for _, bucket := range uniqueBuckets {
+		bucket.Bucket.ForEach(func(k []byte, v []byte) error {
+			uniqueCount++
+			return nil
+		})
+	}
+	fmt.Printf("Total Unique Indexes: %d\n", uniqueCount)
+
 	gob.Register(ds.Config{})
 	data := configBucket.Bucket.Get([]byte("config"))
 	config, err := gobDecodeConfig(data)
@@ -107,6 +127,7 @@ func run(tx *bolt.Tx) {
 	fmt.Printf("Primary Key Field: %s\n", config.PrimaryKey)
 	fmt.Printf("Indexed Fields: %s\n", config.Indexes)
 	fmt.Printf("Unique Fields: %s\n", config.Uniques)
+	fmt.Printf("Last Insert Index: %d\n", config.LastInsertIndex)
 }
 
 func printHelpAndExit() {

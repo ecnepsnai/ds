@@ -71,7 +71,7 @@ func main() {
 		i++
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(workDir, randomString(12)+".db"))
+	table, err := ds.Register(exampleType{}, path.Join(workDir, randomString(12)+".db"), nil)
 	if err != nil {
 		panic(fmt.Sprintf("Error registering table: %s", err.Error()))
 	}
