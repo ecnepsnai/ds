@@ -77,3 +77,36 @@ for _, v := range values {
     object := value.(exampleType)
 }
 ```
+
+## Migrate a Table
+
+As DS tables are tied to a specified struct, you may need to migrate a table to a newer struct.
+DS provides a built in method for migrating tables.
+
+```golang
+// Define a struct that maps to the current type used in the table
+type oldType struct{}
+
+// Define your new struct
+type newType struct{}
+
+result := ds.Migrate(ds.MigrateParams{
+    TablePath: pathToTable,
+    NewPath: pathToTable,
+    OldType: oldType{},
+    NewType: newType{},
+    MigrateObject: func(o interface{}) (interface{}, error) {
+        old := o.(oldType)
+        // Here you can form the "new" entry based on
+        // the old one.
+        // Return the new entry.
+        // Or, return an error
+        // Or, return nothing and this entry will be skipped
+        return newType{}, nil
+    },
+})
+if !result.Success {
+    // Migration failed.
+    panic(result.Error)
+}
+```
