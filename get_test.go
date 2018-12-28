@@ -78,7 +78,7 @@ func TestGetIndexSorted(t *testing.T) {
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
-		Unique  string `ds:"unique"`
+		Value   int    `ds:"unique"`
 	}
 
 	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
@@ -92,7 +92,7 @@ func TestGetIndexSorted(t *testing.T) {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
 			Index:   index,
-			Unique:  randomString(12),
+			Value:   i,
 		})
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
@@ -100,12 +100,35 @@ func TestGetIndexSorted(t *testing.T) {
 		i++
 	}
 
-	objects, err := table.GetIndexSorted("Index", index)
+	// Ascending
+	objects, err := table.GetIndexSorted("Index", index, true)
 	if err != nil {
 		t.Errorf("Error getting many objects: %s", err.Error())
 	}
 	if len(objects) != count {
 		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+	}
+	for i, object := range objects {
+		example := object.(exampleType)
+		expect := (count - 1) - i
+		if expect != example.Value {
+			t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
+		}
+	}
+
+	// Decending
+	objects, err = table.GetIndexSorted("Index", index, false)
+	if err != nil {
+		t.Errorf("Error getting many objects: %s", err.Error())
+	}
+	if len(objects) != count {
+		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+	}
+	for i, object := range objects {
+		example := object.(exampleType)
+		if i != example.Value {
+			t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
+		}
 	}
 }
 
@@ -123,7 +146,7 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	_, err = table.GetIndexSorted("Index", "")
+	_, err = table.GetIndexSorted("Index", "", true)
 	if err == nil {
 		t.Errorf("No error seen while getting sorted on nonsorted table")
 	}

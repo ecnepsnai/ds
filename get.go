@@ -97,8 +97,9 @@ func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}
 
 // GetIndexSorted will get multiple entries that contain the same value for the specified indexed field
 // sorted by their insertion.
+// If ascending is true, the results are sorted by most recently inserted to oldest. If false, it's the reverse.
 // Retuns an empty array if nothing found.
-func (table *Table) GetIndexSorted(fieldName string, value interface{}) ([]interface{}, error) {
+func (table *Table) GetIndexSorted(fieldName string, value interface{}, ascending bool) ([]interface{}, error) {
 	if table.options.DisableSorting {
 		table.log.Error("Call GetIndexSorted on non-sorted table")
 		return nil, fmt.Errorf("Call GetIndexSorted on non-sorted table")
@@ -133,7 +134,12 @@ func (table *Table) GetIndexSorted(fieldName string, value interface{}) ([]inter
 	for k := range orderMap {
 		keys = append(keys, k)
 	}
-	sort.SliceStable(keys, func(i int, j int) bool { return keys[i] < keys[j] })
+	sort.SliceStable(keys, func(i int, j int) bool {
+		if ascending {
+			return keys[i] > keys[j]
+		}
+		return keys[i] < keys[j]
+	})
 
 	var sortedObject = make([]interface{}, len(keys))
 	for i, key := range keys {
