@@ -216,3 +216,56 @@ func (table *Table) GetAll() ([]interface{}, error) {
 
 	return entires, nil
 }
+
+// GetAllSorted will get all entries sorted by their insertion.
+// If ascending is true, the results are sorted by most recently inserted to oldest. If false, it's the reverse.
+// Retuns an empty array if nothing found.
+func (table *Table) GetAllSorted(ascending bool) ([]interface{}, error) {
+	if table.options.DisableSorting {
+		table.log.Error("Call GetAllSorted on non-sorted table")
+		return nil, fmt.Errorf("Call GetAllSorted on non-sorted table")
+	}
+
+	objects, err := table.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(objects) == 0 {
+		return objects, nil
+	}
+
+	orderMap := map[uint64]interface{}{}
+	err = table.data.View(func(tx *bolt.Tx) error {
+		for _, object := range objects {
+			index, err := table.indexForObject(tx, object)
+			if err != nil {
+				return err
+			}
+			orderMap[index] = object
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// To store the keys in slice in sorted order
+	var keys []uint64
+	for k := range orderMap {
+		keys = append(keys, k)
+	}
+	sort.SliceStable(keys, func(i int, j int) bool {
+		if ascending {
+			return keys[i] > keys[j]
+		}
+		return keys[i] < keys[j]
+	})
+
+	var sortedObject = make([]interface{}, len(keys))
+	for i, key := range keys {
+		sortedObject[i] = orderMap[key]
+	}
+
+	return sortedObject, nil
+}
