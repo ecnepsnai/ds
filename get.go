@@ -3,11 +3,20 @@ package ds
 import (
 	"encoding/binary"
 	"fmt"
-	"reflect"
 	"sort"
 
 	"github.com/boltdb/bolt"
 )
+
+// GetOptions describes options for getting entries from a DS table
+type GetOptions struct {
+	// Should the results be sorted. Does nothing for unsorted tables
+	Sorted bool
+	// If results are to be sorted, should they be from most recent to oldest (true) or invese (false)
+	Ascending bool
+	// The maximum number of entries to return. 0 means unlimited
+	Max int
+}
 
 // Get will get a single entry by its primary key. Returns (nil, nil) if nothing found.
 func (table *Table) Get(primaryKey interface{}) (interface{}, error) {
@@ -50,10 +59,20 @@ func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 // GetIndex will get multiple entries that contain the same value for the specified indexed field.
 // Result is not ordered. Use GetIndexSorted to return a sorted slice.
 // Returns an empty array if nothing found.
-func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}, error) {
+func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOptions) ([]interface{}, error) {
 	if !table.IsIndexed(fieldName) {
 		table.log.Error("Field '%s' is not indexed", fieldName)
 		return nil, fmt.Errorf("Field '%s' is not indexed", fieldName)
+	}
+
+	o := GetOptions{}
+	if options != nil {
+		o = *options
+	}
+
+	if table.options.DisableSorting && o.Sorted {
+		table.log.Warn("Requested sorted results from unsorted table")
+		o.Sorted = false
 	}
 
 	indexValueBytes, err := gobEncode(value)
@@ -82,8 +101,24 @@ func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}
 		return nil, err
 	}
 
-	var values = make([]interface{}, len(keys))
+	if o.Sorted {
+		return table.getIndexSorted(keys, o)
+	}
+	return table.getIndexUnsorted(keys, o)
+}
+
+func (table *Table) getIndexUnsorted(keys [][]byte, options GetOptions) ([]interface{}, error) {
+	length := len(keys)
+	if options.Max > 0 {
+		length = options.Max
+	}
+
+	var values = make([]interface{}, length)
 	for i, key := range keys {
+		if i >= length {
+			break
+		}
+
 		v, err := table.getPrimaryKey(key)
 		if err != nil {
 			table.log.Error("Error getting object: %s", err.Error())
@@ -95,32 +130,12 @@ func (table *Table) GetIndex(fieldName string, value interface{}) ([]interface{}
 	return values, nil
 }
 
-// GetIndexSorted will get multiple entries that contain the same value for the specified indexed field
-// sorted by their insertion.
-// If ascending is true, the results are sorted by most recently inserted to oldest. If false, it's the reverse.
-// Retuns an empty array if nothing found.
-func (table *Table) GetIndexSorted(fieldName string, value interface{}, ascending bool) ([]interface{}, error) {
-	if table.options.DisableSorting {
-		table.log.Error("Call GetIndexSorted on non-sorted table")
-		return nil, fmt.Errorf("Call GetIndexSorted on non-sorted table")
-	}
-
-	objects, err := table.GetIndex(fieldName, value)
-	if err != nil {
-		return nil, err
-	}
-	if len(objects) == 0 {
-		return objects, nil
-	}
-
-	orderMap := map[uint64]interface{}{}
-	err = table.data.View(func(tx *bolt.Tx) error {
-		for _, object := range objects {
-			index, err := table.indexForObject(tx, object)
-			if err != nil {
-				return err
-			}
-			orderMap[index] = object
+func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interface{}, error) {
+	orderMap := map[uint64][]byte{}
+	err := table.data.View(func(tx *bolt.Tx) error {
+		for _, key := range keys {
+			index := table.indexForPrimaryKey(tx, key)
+			orderMap[index] = key
 		}
 
 		return nil
@@ -130,38 +145,35 @@ func (table *Table) GetIndexSorted(fieldName string, value interface{}, ascendin
 	}
 
 	// To store the keys in slice in sorted order
-	var keys []uint64
+	var indexes []uint64
 	for k := range orderMap {
-		keys = append(keys, k)
+		indexes = append(indexes, k)
 	}
-	sort.SliceStable(keys, func(i int, j int) bool {
-		if ascending {
-			return keys[i] > keys[j]
+	sort.SliceStable(indexes, func(i int, j int) bool {
+		if options.Ascending {
+			return indexes[i] > indexes[j]
 		}
-		return keys[i] < keys[j]
+		return indexes[i] < indexes[j]
 	})
 
-	var sortedObject = make([]interface{}, len(keys))
-	for i, key := range keys {
-		sortedObject[i] = orderMap[key]
+	length := len(keys)
+	if options.Max > 0 {
+		length = options.Max
+	}
+	var sortedObject = make([]interface{}, length)
+	for i, key := range indexes {
+		if i >= length {
+			break
+		}
+		primaryKey := orderMap[key]
+		o, err := table.getPrimaryKey(primaryKey)
+		if err != nil {
+			return nil, err
+		}
+		sortedObject[i] = o
 	}
 
 	return sortedObject, nil
-}
-
-func (table *Table) indexForObject(tx *bolt.Tx, object interface{}) (uint64, error) {
-	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
-	pkBytes, err := gobEncode(pk)
-	if err != nil {
-		return 0, err
-	}
-	indexBucket := tx.Bucket(insertOrderKey)
-	b := indexBucket.Get(pkBytes)
-	index := binary.LittleEndian.Uint64(b)
-	if err != nil {
-		return 0, err
-	}
-	return index, nil
 }
 
 // GetUnique will get a single entry based on the value of the provided unique field.
@@ -196,11 +208,29 @@ func (table *Table) GetUnique(fieldName string, value interface{}) (interface{},
 }
 
 // GetAll will get all of the entries in the table.
-func (table *Table) GetAll() ([]interface{}, error) {
+func (table *Table) GetAll(options *GetOptions) ([]interface{}, error) {
+	o := GetOptions{}
+	if options != nil {
+		o = *options
+	}
+
+	if o.Sorted {
+		return table.getAllSorted(o)
+	}
+	return table.getAllUnsorted(o)
+}
+
+func (table *Table) getAllUnsorted(options GetOptions) ([]interface{}, error) {
 	var entires []interface{}
+	i := 0
 	err := table.data.View(func(tx *bolt.Tx) error {
 		dataBucket := tx.Bucket(dataKey)
 		return dataBucket.ForEach(func(k []byte, v []byte) error {
+			i++
+			if options.Max > 0 && i > options.Max {
+				return nil
+			}
+
 			value, err := table.gobDecodeValue(v)
 			if err != nil {
 				table.log.Error("Error decoding value: %s", err.Error())
@@ -217,34 +247,17 @@ func (table *Table) GetAll() ([]interface{}, error) {
 	return entires, nil
 }
 
-// GetAllSorted will get all entries sorted by their insertion.
-// If ascending is true, the results are sorted by most recently inserted to oldest. If false, it's the reverse.
-// Retuns an empty array if nothing found.
-func (table *Table) GetAllSorted(ascending bool) ([]interface{}, error) {
-	if table.options.DisableSorting {
-		table.log.Error("Call GetAllSorted on non-sorted table")
-		return nil, fmt.Errorf("Call GetAllSorted on non-sorted table")
-	}
-
-	objects, err := table.GetAll()
-	if err != nil {
-		return nil, err
-	}
-	if len(objects) == 0 {
-		return objects, nil
-	}
-
-	orderMap := map[uint64]interface{}{}
-	err = table.data.View(func(tx *bolt.Tx) error {
-		for _, object := range objects {
-			index, err := table.indexForObject(tx, object)
-			if err != nil {
-				return err
-			}
-			orderMap[index] = object
-		}
-
-		return nil
+func (table *Table) getAllSorted(options GetOptions) ([]interface{}, error) {
+	// Map index to primary key
+	orderMap := map[uint64][]byte{}
+	err := table.data.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(insertOrderKey)
+		return bucket.ForEach(func(k []byte, v []byte) error {
+			primaryKey := k
+			index := binary.LittleEndian.Uint64(v)
+			orderMap[index] = primaryKey
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -256,16 +269,29 @@ func (table *Table) GetAllSorted(ascending bool) ([]interface{}, error) {
 		keys = append(keys, k)
 	}
 	sort.SliceStable(keys, func(i int, j int) bool {
-		if ascending {
+		if options.Ascending {
 			return keys[i] > keys[j]
 		}
 		return keys[i] < keys[j]
 	})
 
-	var sortedObject = make([]interface{}, len(keys))
-	for i, key := range keys {
-		sortedObject[i] = orderMap[key]
+	length := len(keys)
+	if options.Max > 0 {
+		length = options.Max
+	}
+	objects := make([]interface{}, length)
+	for i, index := range keys {
+		if i >= length {
+			break
+		}
+
+		primaryKey := orderMap[index]
+		object, err := table.getPrimaryKey(primaryKey)
+		if err != nil {
+			return nil, err
+		}
+		objects[i] = object
 	}
 
-	return sortedObject, nil
+	return objects, nil
 }

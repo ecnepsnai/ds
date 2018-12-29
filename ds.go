@@ -49,10 +49,10 @@ Get single:
 
 Get Multiple:
 
-`GetIndex` returns an unsorted slice. Use `GetIndexSorted` to return based on the insertion order from
-newest to oldest.
+The `GetOptions` struct defines optional parameters to a Get (that returns multiple entires).
+Pass nil for defaults.
 
-    values, err := table.GetIndex("Index", "bar")
+    values, err := table.GetIndex("Index", "bar", &ds.GetOptions{Sorted: true, Ascending: true})
     if err != nil {
         panic("Error getting many objects: %s", err.Error())
     }

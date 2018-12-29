@@ -113,7 +113,7 @@ func (table *Table) delete(tx *bolt.Tx, o interface{}) error {
 
 // DeleteAllIndex will delete all objects matching the given indexed fields value
 func (table *Table) DeleteAllIndex(fieldName string, value interface{}) error {
-	objects, err := table.GetIndex(fieldName, value)
+	objects, err := table.GetIndex(fieldName, value, nil)
 	if err != nil {
 		return err
 	}

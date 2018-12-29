@@ -107,7 +107,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	}
 	defer table.Close()
 
-	objects, err := oldTable.GetAllSorted(false)
+	objects, err := oldTable.GetAll(&GetOptions{Sorted: true, Ascending: true})
 	if err != nil {
 		log.Error("Error getting all entires: %s", err.Error())
 		results.Success = false
