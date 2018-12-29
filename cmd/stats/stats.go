@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -11,8 +12,22 @@ import (
 	"github.com/ecnepsnai/ds"
 )
 
+type results struct {
+	EntryCount      int      `json:"entry_count"`
+	IndexCount      int      `json:"index_count"`
+	UniqueCount     int      `json:"unique_count"`
+	Name            string   `json:"name"`
+	TypeOf          string   `json:"type_of"`
+	PrimaryKey      string   `json:"primary_key"`
+	Indexes         []string `json:"indexes"`
+	Uniques         []string `json:"uniques"`
+	LastInsertIndex uint64   `json:"last_insert_index"`
+	Size            int64    `json:"size"`
+}
+
 func main() {
 	var tablePath string
+	outputJSON := false
 
 	i := 0
 	args := os.Args[1:]
@@ -21,6 +36,8 @@ func main() {
 
 		if arg == "-h" || arg == "--help" {
 			printHelpAndExit()
+		} else if arg == "-j" || arg == "--json" {
+			outputJSON = true
 		} else {
 			tablePath = arg
 		}
@@ -43,12 +60,33 @@ func main() {
 		panic(err)
 	}
 
+	var r results
 	err = data.View(func(tx *bolt.Tx) error {
-		run(tx)
+		r = run(tx)
 		return nil
 	})
 	data.Close()
-	fmt.Printf("Store Size: %d\n", info.Size())
+
+	r.Size = info.Size()
+
+	if outputJSON {
+		data, err := json.Marshal(r)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%s\n", data)
+		return
+	}
+	fmt.Printf("Total entries: %d\n", r.EntryCount)
+	fmt.Printf("Total Indexes: %d\n", r.IndexCount)
+	fmt.Printf("Total Unique Indexes: %d\n", r.UniqueCount)
+	fmt.Printf("Name: %s\n", r.Name)
+	fmt.Printf("Type: %s\n", r.TypeOf)
+	fmt.Printf("Primary Key Field: %s\n", r.PrimaryKey)
+	fmt.Printf("Indexed Fields: %s\n", r.Indexes)
+	fmt.Printf("Unique Fields: %s\n", r.Uniques)
+	fmt.Printf("Last Insert Index: %d\n", r.LastInsertIndex)
+	fmt.Printf("Store Size: %d\n", r.Size)
 }
 
 type bucket struct {
@@ -56,7 +94,7 @@ type bucket struct {
 	Name   string
 }
 
-func run(tx *bolt.Tx) {
+func run(tx *bolt.Tx) (r results) {
 	var indexBuckets []bucket
 	var uniqueBuckets []bucket
 	var dataBucket bucket
@@ -96,7 +134,7 @@ func run(tx *bolt.Tx) {
 		entryCount++
 		return nil
 	})
-	fmt.Printf("Total entries: %d\n", entryCount)
+	r.EntryCount = entryCount
 
 	indexCount := 0
 	for _, bucket := range indexBuckets {
@@ -105,7 +143,8 @@ func run(tx *bolt.Tx) {
 			return nil
 		})
 	}
-	fmt.Printf("Total Indexes: %d\n", indexCount)
+	r.IndexCount = indexCount
+
 	uniqueCount := 0
 	for _, bucket := range uniqueBuckets {
 		bucket.Bucket.ForEach(func(k []byte, v []byte) error {
@@ -113,7 +152,7 @@ func run(tx *bolt.Tx) {
 			return nil
 		})
 	}
-	fmt.Printf("Total Unique Indexes: %d\n", uniqueCount)
+	r.UniqueCount = uniqueCount
 
 	gob.Register(ds.Config{})
 	data := configBucket.Bucket.Get([]byte("config"))
@@ -122,16 +161,21 @@ func run(tx *bolt.Tx) {
 		panic(err)
 	}
 
-	fmt.Printf("Name: %s\n", config.Name)
-	fmt.Printf("Type: %s\n", config.TypeOf)
-	fmt.Printf("Primary Key Field: %s\n", config.PrimaryKey)
-	fmt.Printf("Indexed Fields: %s\n", config.Indexes)
-	fmt.Printf("Unique Fields: %s\n", config.Uniques)
-	fmt.Printf("Last Insert Index: %d\n", config.LastInsertIndex)
+	r.Name = config.Name
+	r.TypeOf = config.TypeOf
+	r.PrimaryKey = config.PrimaryKey
+	r.Indexes = config.Indexes
+	r.Uniques = config.Uniques
+	r.LastInsertIndex = config.LastInsertIndex
+
+	return
 }
 
 func printHelpAndExit() {
-	fmt.Printf("Usage %s <table path>\n", os.Args[0])
+	fmt.Printf("Usage %s [options] <table path>\n", os.Args[0])
+	fmt.Printf("Options:\n")
+	fmt.Printf("-j --json  Print stats as a JSON object\n")
+	fmt.Printf("-h --help  Print this help and exit\n")
 	os.Exit(0)
 }
 
