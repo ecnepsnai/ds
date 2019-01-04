@@ -65,6 +65,9 @@ func main() {
 		r = run(tx)
 		return nil
 	})
+	if err != nil {
+		panic(err)
+	}
 	data.Close()
 
 	r.Size = info.Size()

@@ -36,10 +36,7 @@ func (config *Config) update(tx *bolt.Tx) error {
 	if err != nil {
 		return err
 	}
-	if err := bucket.Put(configKey, data); err != nil {
-		return err
-	}
-	return nil
+	return bucket.Put(configKey, data)
 }
 
 func (table *Table) initalizeConfig(tx *bolt.Tx) error {

@@ -26,6 +26,24 @@ func (table *Table) Delete(o interface{}) error {
 	return nil
 }
 
+// DeletePrimaryKey will delete the object with the associated primary key and clean indexes
+func (table *Table) DeletePrimaryKey(o interface{}) error {
+	object, err := table.Get(o)
+	if err != nil {
+		return err
+	}
+	return table.Delete(object)
+}
+
+// DeleteUnique will delete the object with the associated unique value and clean indexes
+func (table *Table) DeleteUnique(field string, o interface{}) error {
+	object, err := table.GetUnique(field, o)
+	if err != nil {
+		return err
+	}
+	return table.Delete(object)
+}
+
 func (table *Table) delete(tx *bolt.Tx, o interface{}) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
@@ -134,4 +152,49 @@ func indexOf(slice [][]byte, value []byte) int {
 	}
 
 	return -1
+}
+
+// DeleteAll delete all objects from the table
+func (table *Table) DeleteAll() error {
+	err := table.data.Update(func(tx *bolt.Tx) error {
+		if err := table.purgeBucket(tx, dataKey); err != nil {
+			return err
+		}
+		for _, index := range table.indexes {
+			if err := table.purgeBucket(tx, []byte(indexPrefix+index)); err != nil {
+				return err
+			}
+		}
+		for _, unique := range table.uniques {
+			if err := table.purgeBucket(tx, []byte(uniquePrefix+unique)); err != nil {
+				return err
+			}
+		}
+		config, err := table.getConfig(tx)
+		if err != nil {
+			return err
+		}
+		config.LastInsertIndex = 0
+		if err := config.update(tx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
+}
+
+func (table *Table) purgeBucket(tx *bolt.Tx, bucketName []byte) error {
+	if err := tx.DeleteBucket(bucketName); err != nil {
+		table.log.Error("Error deleting bucket '%s': %s", bucketName, err.Error())
+		return err
+	}
+	table.log.Debug("Deleting bucket '%s'", bucketName)
+	_, err := tx.CreateBucket(bucketName)
+	if err != nil {
+		table.log.Error("Error creating bucket '%s': %s", bucketName, err.Error())
+		return err
+	}
+	table.log.Warn("Bucket '%s' purged", bucketName)
+	return nil
 }
