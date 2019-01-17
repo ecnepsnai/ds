@@ -52,6 +52,7 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("Error getting object insert index: %s", err.Error())
 	}
 
+	oldIndex := object.Index
 	object.Index = randomString(12)
 
 	err = table.Update(object)
@@ -86,5 +87,15 @@ func TestUpdate(t *testing.T) {
 
 	if newLastInsertIndex != lastInsertIndex {
 		t.Errorf("Last Inserted Index is not expected. Expected %d got %d", lastInsertIndex, newLastInsertIndex)
+	}
+
+	// Try to get the object by its old index
+	objects, err := table.GetIndex("Index", oldIndex, nil)
+	if err != nil {
+		t.Errorf("Error getting objects: %s", err.Error())
+	}
+	if len(objects) > 0 {
+		// If this fails, then the indexes aren't being cleaned up correctly
+		t.Errorf("Unexpected number of objects returned. Expected 0 got %d", len(objects))
 	}
 }
