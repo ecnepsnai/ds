@@ -80,6 +80,7 @@ func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOp
 		table.log.Error("Error encoding index value: %s", err.Error())
 		return nil, err
 	}
+	table.log.Debug("Get Index(%s) == %x", fieldName, indexValueBytes)
 
 	var primaryKeysData []byte
 	err = table.data.View(func(tx *bolt.Tx) error {
@@ -100,6 +101,8 @@ func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOp
 		table.log.Error("Error decoding primary key list: %s", err.Error())
 		return nil, err
 	}
+
+	table.log.Debug("Keys matching Index(%s) == %x: %d", fieldName, indexValueBytes, len(keys))
 
 	if o.Sorted {
 		return table.getIndexSorted(keys, o)
@@ -263,6 +266,10 @@ func (table *Table) getAllSorted(options GetOptions) ([]interface{}, error) {
 		return nil, err
 	}
 
+	if len(orderMap) == 0 {
+		return []interface{}{}, nil
+	}
+
 	// To store the keys in slice in sorted order
 	var keys []uint64
 	for k := range orderMap {
@@ -276,7 +283,7 @@ func (table *Table) getAllSorted(options GetOptions) ([]interface{}, error) {
 	})
 
 	length := len(keys)
-	if options.Max > 0 {
+	if options.Max > 0 && length > options.Max {
 		length = options.Max
 	}
 	objects := make([]interface{}, length)
