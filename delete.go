@@ -174,6 +174,9 @@ func (table *Table) DeleteAll() error {
 		if err := table.purgeBucket(tx, dataKey); err != nil {
 			return err
 		}
+		if err := table.purgeBucket(tx, insertOrderKey); err != nil {
+			return err
+		}
 		for _, index := range table.indexes {
 			if err := table.purgeBucket(tx, []byte(indexPrefix+index)); err != nil {
 				return err
