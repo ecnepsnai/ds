@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 )
 
 // Delete will delete the provided object and clean indexes
@@ -17,7 +17,7 @@ func (table *Table) Delete(o interface{}) error {
 		return fmt.Errorf("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}
 
-	err := table.data.Update(func(tx *bolt.Tx) error {
+	err := table.data.Update(func(tx *bbolt.Tx) error {
 		return table.delete(tx, o)
 	})
 	if err != nil {
@@ -45,7 +45,7 @@ func (table *Table) DeleteUnique(field string, o interface{}) error {
 	return table.Delete(object)
 }
 
-func (table *Table) delete(tx *bolt.Tx, o interface{}) error {
+func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
@@ -170,7 +170,7 @@ func indexOf(slice [][]byte, value []byte) int {
 
 // DeleteAll delete all objects from the table
 func (table *Table) DeleteAll() error {
-	err := table.data.Update(func(tx *bolt.Tx) error {
+	err := table.data.Update(func(tx *bbolt.Tx) error {
 		if err := table.purgeBucket(tx, dataKey); err != nil {
 			return err
 		}
@@ -201,7 +201,7 @@ func (table *Table) DeleteAll() error {
 	return err
 }
 
-func (table *Table) purgeBucket(tx *bolt.Tx, bucketName []byte) error {
+func (table *Table) purgeBucket(tx *bbolt.Tx, bucketName []byte) error {
 	if err := tx.DeleteBucket(bucketName); err != nil {
 		table.log.Error("Error deleting bucket '%s': %s", bucketName, err.Error())
 		return err

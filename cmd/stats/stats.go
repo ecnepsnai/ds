@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 	"github.com/ecnepsnai/ds"
 )
 
@@ -55,13 +55,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	data, err := bolt.Open(tablePath, os.ModePerm, nil)
+	data, err := bbolt.Open(tablePath, os.ModePerm, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	var r results
-	err = data.View(func(tx *bolt.Tx) error {
+	err = data.View(func(tx *bbolt.Tx) error {
 		r = run(tx)
 		return nil
 	})
@@ -93,18 +93,18 @@ func main() {
 }
 
 type bucket struct {
-	Bucket *bolt.Bucket
+	Bucket *bbolt.Bucket
 	Name   string
 }
 
-func run(tx *bolt.Tx) (r results) {
+func run(tx *bbolt.Tx) (r results) {
 	var indexBuckets []bucket
 	var uniqueBuckets []bucket
 	var dataBucket bucket
 	var configBucket bucket
 
 	// Find all buckets
-	tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+	tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
 		bucketName := string(name)
 
 		if strings.HasPrefix(bucketName, "index:") {

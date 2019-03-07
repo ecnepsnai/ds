@@ -3,7 +3,7 @@ package ds
 import (
 	"fmt"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 )
 
 // Config describes ds table configuration
@@ -16,7 +16,7 @@ type Config struct {
 	LastInsertIndex uint64
 }
 
-func (table *Table) getConfig(tx *bolt.Tx) (*Config, error) {
+func (table *Table) getConfig(tx *bbolt.Tx) (*Config, error) {
 	configData := tx.Bucket(configKey).Get(configKey)
 	if configData == nil {
 		table.log.Error("No config present for table")
@@ -30,7 +30,7 @@ func (table *Table) getConfig(tx *bolt.Tx) (*Config, error) {
 	return config, nil
 }
 
-func (config *Config) update(tx *bolt.Tx) error {
+func (config *Config) update(tx *bbolt.Tx) error {
 	bucket := tx.Bucket(configKey)
 	data, err := gobEncode(*config)
 	if err != nil {
@@ -39,7 +39,7 @@ func (config *Config) update(tx *bolt.Tx) error {
 	return bucket.Put(configKey, data)
 }
 
-func (table *Table) initalizeConfig(tx *bolt.Tx) error {
+func (table *Table) initalizeConfig(tx *bbolt.Tx) error {
 	configBucket, err := tx.CreateBucketIfNotExists(configKey)
 	if err != nil {
 		table.log.Error("Error creating config bucket: %s", err.Error())

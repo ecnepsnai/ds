@@ -3,7 +3,7 @@ package ds
 import (
 	"reflect"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 	"github.com/ecnepsnai/logtic"
 )
 
@@ -16,7 +16,7 @@ type Table struct {
 	primaryKey string
 	indexes    []string
 	uniques    []string
-	data       *bolt.DB
+	data       *bbolt.DB
 	options    Options
 }
 
@@ -27,7 +27,7 @@ func (table *Table) Close() {
 	}
 }
 
-func tryCloseData(data *bolt.DB) {
+func tryCloseData(data *bbolt.DB) {
 	defer panicRecovery()
 	data.Close()
 }

@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 )
 
 // Test that an object can be updated
@@ -33,7 +33,7 @@ func TestUpdate(t *testing.T) {
 
 	var index uint64
 	var lastInsertIndex uint64
-	table.data.View(func(tx *bolt.Tx) error {
+	table.data.View(func(tx *bbolt.Tx) error {
 		i, err := table.indexForObject(tx, object)
 		if err != nil {
 			return err
@@ -62,7 +62,7 @@ func TestUpdate(t *testing.T) {
 
 	var newIndex uint64
 	var newLastInsertIndex uint64
-	table.data.View(func(tx *bolt.Tx) error {
+	table.data.View(func(tx *bbolt.Tx) error {
 		i, err := table.indexForObject(tx, object)
 		if err != nil {
 			return err

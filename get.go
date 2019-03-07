@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 )
 
 // GetOptions describes options for getting entries from a DS table
@@ -35,7 +35,7 @@ func (table *Table) Get(primaryKey interface{}) (interface{}, error) {
 
 func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 	var data []byte
-	err := table.data.View(func(tx *bolt.Tx) error {
+	err := table.data.View(func(tx *bbolt.Tx) error {
 		dataBucket := tx.Bucket(dataKey)
 		data = dataBucket.Get(key)
 		return nil
@@ -83,7 +83,7 @@ func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOp
 	table.log.Debug("Get Index(%s) == %x", fieldName, indexValueBytes)
 
 	var primaryKeysData []byte
-	err = table.data.View(func(tx *bolt.Tx) error {
+	err = table.data.View(func(tx *bbolt.Tx) error {
 		indexBucket := tx.Bucket([]byte(indexPrefix + fieldName))
 		primaryKeysData = indexBucket.Get(indexValueBytes)
 		return nil
@@ -135,7 +135,7 @@ func (table *Table) getIndexUnsorted(keys [][]byte, options GetOptions) ([]inter
 
 func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interface{}, error) {
 	orderMap := map[uint64][]byte{}
-	err := table.data.View(func(tx *bolt.Tx) error {
+	err := table.data.View(func(tx *bbolt.Tx) error {
 		for _, key := range keys {
 			index := table.indexForPrimaryKey(tx, key)
 			orderMap[index] = key
@@ -194,7 +194,7 @@ func (table *Table) GetUnique(fieldName string, value interface{}) (interface{},
 	}
 
 	var primaryKeyData []byte
-	err = table.data.View(func(tx *bolt.Tx) error {
+	err = table.data.View(func(tx *bbolt.Tx) error {
 		uniqueBucket := tx.Bucket([]byte(uniquePrefix + fieldName))
 		primaryKeyData = uniqueBucket.Get(uniqueValueBytes)
 		return nil
@@ -226,7 +226,7 @@ func (table *Table) GetAll(options *GetOptions) ([]interface{}, error) {
 func (table *Table) getAllUnsorted(options GetOptions) ([]interface{}, error) {
 	var entires []interface{}
 	i := 0
-	err := table.data.View(func(tx *bolt.Tx) error {
+	err := table.data.View(func(tx *bbolt.Tx) error {
 		dataBucket := tx.Bucket(dataKey)
 		return dataBucket.ForEach(func(k []byte, v []byte) error {
 			i++
@@ -253,7 +253,7 @@ func (table *Table) getAllUnsorted(options GetOptions) ([]interface{}, error) {
 func (table *Table) getAllSorted(options GetOptions) ([]interface{}, error) {
 	// Map index to primary key
 	orderMap := map[uint64][]byte{}
-	err := table.data.View(func(tx *bolt.Tx) error {
+	err := table.data.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(insertOrderKey)
 		return bucket.ForEach(func(k []byte, v []byte) error {
 			primaryKey := k

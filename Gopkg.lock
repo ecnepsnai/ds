@@ -2,20 +2,20 @@
 
 
 [[projects]]
-  digest = "1:0f98f59e9a2f4070d66f0c9c39561f68fcd1dc837b22a852d28d0003aebd1b1e"
-  name = "github.com/boltdb/bolt"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
-  version = "v1.3.1"
-
-[[projects]]
   digest = "1:f80f3f1588697121a02b2d43e9b4c74f658bc3d82691fa21243ee3bc3c216942"
   name = "github.com/ecnepsnai/logtic"
   packages = ["."]
   pruneopts = "UT"
   revision = "570fc158b62740b6d94727934d1f05b4bcccc002"
   version = "1.0.1"
+
+[[projects]]
+  digest = "1:5f7414cf41466d4b4dd7ec52b2cd3e481e08cfd11e7e24fef730c0e483e88bb1"
+  name = "github.com/etcd-io/bbolt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "63597a96ec0ad9e6d43c3fc81e809909e0237461"
+  version = "v1.3.2"
 
 [[projects]]
   digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
@@ -53,8 +53,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/boltdb/bolt",
     "github.com/ecnepsnai/logtic",
+    "github.com/etcd-io/bbolt",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

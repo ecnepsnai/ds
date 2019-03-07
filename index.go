@@ -4,17 +4,17 @@ import (
 	"encoding/binary"
 	"reflect"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 )
 
-func (table *Table) indexForPrimaryKey(tx *bolt.Tx, primaryKey []byte) uint64 {
+func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) uint64 {
 	indexBucket := tx.Bucket(insertOrderKey)
 	b := indexBucket.Get(primaryKey)
 	index := binary.LittleEndian.Uint64(b)
 	return index
 }
 
-func (table *Table) indexForObject(tx *bolt.Tx, object interface{}) (uint64, error) {
+func (table *Table) indexForObject(tx *bbolt.Tx, object interface{}) (uint64, error) {
 	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
 	pkBytes, err := gobEncode(pk)
 	if err != nil {

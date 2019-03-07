@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 	"github.com/ecnepsnai/logtic"
 )
 
@@ -85,14 +85,14 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	table.indexes = indexes
 	table.uniques = uniques
 
-	data, err := bolt.Open(filePath, os.ModePerm, nil)
+	data, err := bbolt.Open(filePath, os.ModePerm, nil)
 	if err != nil {
 		table.log.Error("Error opening bolt database: %s", err.Error())
 		return nil, err
 	}
 	table.data = data
 
-	err = data.Update(func(tx *bolt.Tx) error {
+	err = data.Update(func(tx *bbolt.Tx) error {
 		if err := table.initalizeConfig(tx); err != nil {
 			table.log.Error("Error initializing config: %s", err.Error())
 			return err

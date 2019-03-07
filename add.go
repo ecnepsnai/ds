@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/boltdb/bolt"
+	"github.com/etcd-io/bbolt"
 )
 
 // Add will add a new object to the table. o must the the same type that was used to register the table and cannot be a pointer.
@@ -16,7 +16,7 @@ func (table *Table) Add(o interface{}) error {
 		return fmt.Errorf("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}
 
-	err := table.data.Update(func(tx *bolt.Tx) error {
+	err := table.data.Update(func(tx *bbolt.Tx) error {
 		return table.add(tx, o)
 	})
 	if err != nil {
@@ -26,7 +26,7 @@ func (table *Table) Add(o interface{}) error {
 	return nil
 }
 
-func (table *Table) add(tx *bolt.Tx, o interface{}) error {
+func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
@@ -128,7 +128,7 @@ func (table *Table) add(tx *bolt.Tx, o interface{}) error {
 	return nil
 }
 
-func (table *Table) setInsertIndexForObject(tx *bolt.Tx, object interface{}, index uint64) error {
+func (table *Table) setInsertIndexForObject(tx *bbolt.Tx, object interface{}, index uint64) error {
 	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
 	primaryKey, err := gobEncode(pk)
 	if err != nil {
