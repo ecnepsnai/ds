@@ -22,6 +22,16 @@ type exampleType struct {
 	Primary string `ds:"primary"`
 	Index   string `ds:"index"`
 	Unique  string `ds:"unique"`
+	Complex complexType
+}
+
+type complexType struct {
+	Nest nestType
+}
+
+type nestType struct {
+	Foo string
+	Bar []string
 }
 
 func main() {
@@ -71,7 +81,7 @@ func main() {
 		i++
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(workDir, randomString(12)+".db"), nil)
+	table, err := ds.Register(exampleType{}, path.Join(workDir, randomString(6)+".db"), nil)
 	if err != nil {
 		panic(fmt.Sprintf("Error registering table: %s", err.Error()))
 	}
@@ -94,18 +104,26 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 	defer wg.Done()
 	i := 0
 
-	index := randomString(12)
+	index := randomString(258)
 	var lastInserted *exampleType
 
 	for i < count {
 		i++
-		action := randomNumber(1, 4)
+		action := randomNumber(1, 5)
 		if action == 1 {
 			// Add uique
 			o := exampleType{
-				Primary: randomString(12),
-				Index:   randomString(12),
-				Unique:  randomString(12),
+				Primary: randomString(258),
+				Index:   randomString(258),
+				Unique:  randomString(258),
+				Complex: complexType{
+					Nest: nestType{
+						Foo: randomString(258),
+						Bar: []string{
+							randomString(258),
+						},
+					},
+				},
 			}
 			lastInserted = &o
 			if err := table.Add(o); err != nil {
@@ -124,9 +142,17 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 		} else if action == 3 {
 			// Add Index
 			o := exampleType{
-				Primary: randomString(12),
+				Primary: randomString(258),
 				Index:   index,
-				Unique:  randomString(12),
+				Unique:  randomString(258),
+				Complex: complexType{
+					Nest: nestType{
+						Foo: randomString(258),
+						Bar: []string{
+							randomString(258),
+						},
+					},
+				},
 			}
 			lastInserted = &o
 			if err := table.Add(o); err != nil {
@@ -138,9 +164,28 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				continue
 			}
 
-			lastInserted.Unique = randomString(12)
+			lastInserted.Unique = randomString(258)
 			if err := table.Update(*lastInserted); err != nil {
 				panic(fmt.Sprintf("Error updating value to table: %s", err.Error()))
+			}
+		} else if action == 5 {
+			// Add large
+			o := exampleType{
+				Primary: randomString(uint16(randomNumber(1000, 9999))),
+				Index:   randomString(uint16(randomNumber(1000, 9999))),
+				Unique:  randomString(uint16(randomNumber(1000, 9999))),
+				Complex: complexType{
+					Nest: nestType{
+						Foo: randomString(uint16(randomNumber(1000, 9999))),
+						Bar: []string{
+							randomString(uint16(randomNumber(1000, 9999))),
+						},
+					},
+				},
+			}
+			lastInserted = &o
+			if err := table.Add(o); err != nil {
+				panic(fmt.Sprintf("Error adding value to table: %s", err.Error()))
 			}
 		}
 	}
