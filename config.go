@@ -39,7 +39,7 @@ func (config *Config) update(tx *bbolt.Tx) error {
 	return bucket.Put(configKey, data)
 }
 
-func (table *Table) initalizeConfig(tx *bbolt.Tx) error {
+func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 	configBucket, err := tx.CreateBucketIfNotExists(configKey)
 	if err != nil {
 		table.log.Error("Error creating config bucket: %s", err.Error())
@@ -69,13 +69,13 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx) error {
 		if err != nil {
 			return err
 		}
-		if config.TypeOf != table.typeOf.Name() {
+		if !force && config.TypeOf != table.typeOf.Name() {
 			table.log.Error("Cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
 			return fmt.Errorf("Cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
 		}
 		table.log.Debug("TypeOf matches")
 		// I don't know how to test this
-		if config.PrimaryKey != table.primaryKey {
+		if !force && config.PrimaryKey != table.primaryKey {
 			table.log.Error("Cannot change primary key of table")
 			return fmt.Errorf("Cannot change primary key of table")
 		}

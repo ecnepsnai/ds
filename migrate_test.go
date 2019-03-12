@@ -8,53 +8,71 @@ import (
 	"testing"
 )
 
+// Test that a migration succeeded
 func TestMigrate(t *testing.T) {
-	type oldType struct {
-		Primary string `ds:"primary"`
-		Index   string `ds:"index"`
-		Unique  string `ds:"unique"`
-	}
-	type newType struct {
-		Primary       string `ds:"primary"`
-		Index         string `ds:"index"`
-		SomethingElse int
-	}
-
-	tablePath := path.Join(tmpDir, randomString(12))
-	table, err := Register(oldType{}, tablePath, nil)
-	if err != nil {
-		t.Errorf("Error registering table: %s", err.Error())
-	}
-
-	i := 0
 	count := 100
-	index := randomString(12)
-	for i < count {
-		err = table.Add(oldType{
-			Primary: randomString(12),
-			Index:   index,
-			Unique:  randomString(12),
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+
+	registerTable := func() string {
+		type user struct {
+			Username string `ds:"primary"`
+			Email    string `ds:"unique"`
+			Enabled  bool   `ds:"index"`
+			Password string
 		}
-		i++
+
+		tp := path.Join(tmpDir, randomString(12))
+		table, err := Register(user{}, tp, nil)
+		if err != nil {
+			t.Fatalf("Error registering table: %s", err.Error())
+		}
+
+		i := 0
+		for i < count {
+			err = table.Add(user{
+				Username: randomString(24),
+				Email:    randomString(24),
+				Enabled:  true,
+				Password: randomString(24),
+			})
+			if err != nil {
+				t.Fatalf("Error adding value to table: %s", err.Error())
+			}
+			i++
+		}
+
+		table.Close()
+		return tp
 	}
 
-	table.Close()
+	tablePath := registerTable()
 
-	i = 0
+	type oldUser struct {
+		Username string `ds:"primary"`
+		Email    string `ds:"unique"`
+		Enabled  bool   `ds:"index"`
+		Password string
+	}
+	type user struct {
+		ID       string `ds:"primary"`
+		Username string `ds:"unique"`
+		Email    string `ds:"unique"`
+		Enabled  bool   `ds:"index"`
+		Password string
+	}
+
 	stats := Migrate(MigrateParams{
 		TablePath: tablePath,
-		OldType:   oldType{},
-		NewType:   newType{},
+		OldType:   oldUser{},
+		NewType:   user{},
 		NewPath:   tablePath,
 		MigrateObject: func(o interface{}) (interface{}, error) {
-			old := o.(oldType)
-			return newType{
-				Primary:       old.Primary,
-				Index:         old.Index,
-				SomethingElse: i,
+			old := o.(oldUser)
+			return user{
+				ID:       randomString(24),
+				Username: old.Username,
+				Email:    old.Email,
+				Enabled:  old.Enabled,
+				Password: old.Password,
 			}, nil
 		},
 	})
@@ -69,6 +87,7 @@ func TestMigrate(t *testing.T) {
 	}
 }
 
+// Test that entries can be skipped in a migration
 func TestMigrateSkip(t *testing.T) {
 	type oldType struct {
 		Primary string `ds:"primary"`
@@ -139,6 +158,7 @@ func TestMigrateSkip(t *testing.T) {
 	}
 }
 
+// Test that a migration will fail if an error is returned
 func TestMigrateFail(t *testing.T) {
 	type oldType struct {
 		Primary string `ds:"primary"`
@@ -201,6 +221,7 @@ func TestMigrateFail(t *testing.T) {
 	}
 }
 
+// Test that the all required parameters are present when requesting a migration
 func TestMigrateParams(t *testing.T) {
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -224,6 +245,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 	table.Close()
 
+	// Missing table path
 	stats := Migrate(MigrateParams{
 		OldType: exampleType{},
 		NewType: exampleType{},
@@ -236,6 +258,7 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
+	// Missing old type
 	stats = Migrate(MigrateParams{
 		TablePath: tablePath,
 		NewType:   exampleType{},
@@ -248,6 +271,7 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
+	// Missing new type
 	stats = Migrate(MigrateParams{
 		TablePath: tablePath,
 		OldType:   exampleType{},
@@ -260,6 +284,7 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
+	// Missing new path
 	stats = Migrate(MigrateParams{
 		TablePath: tablePath,
 		OldType:   exampleType{},
@@ -272,6 +297,7 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
+	// Missing migrate method
 	stats = Migrate(MigrateParams{
 		TablePath: tablePath,
 		NewPath:   tablePath,
@@ -282,6 +308,7 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
+	// Backup already exists
 	ioutil.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
 	stats = Migrate(MigrateParams{
 		TablePath: tablePath,

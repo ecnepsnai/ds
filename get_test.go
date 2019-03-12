@@ -449,6 +449,14 @@ func TestGetNoResults(t *testing.T) {
 	if object != nil {
 		t.Error("Object(s) returned when expected nil")
 	}
+
+	objects, err = table.GetAll(&GetOptions{Sorted: true})
+	if err != nil {
+		t.Errorf("Unexpected error getting item: %s", err.Error())
+	}
+	if object != nil {
+		t.Error("Object(s) returned when expected nil")
+	}
 }
 
 func TestGetIndexMaximum(t *testing.T) {

@@ -89,7 +89,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		return
 	}
 
-	oldTable, err := Register(params.OldType, backupPath, nil)
+	oldTable, err := Register(params.OldType, backupPath, &Options{force: true})
 	if err != nil {
 		log.Error("Error registering old table: %s", err.Error())
 		results.Success = false

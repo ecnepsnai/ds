@@ -158,16 +158,6 @@ func (table *Table) DeleteAllIndex(fieldName string, value interface{}) error {
 	return nil
 }
 
-func indexOf(slice [][]byte, value []byte) int {
-	for i, b := range slice {
-		if bytes.Compare(b, value) == 0 {
-			return i
-		}
-	}
-
-	return -1
-}
-
 // DeleteAll delete all objects from the table
 func (table *Table) DeleteAll() error {
 	err := table.data.Update(func(tx *bbolt.Tx) error {

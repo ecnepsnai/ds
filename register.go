@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/etcd-io/bbolt"
 	"github.com/ecnepsnai/logtic"
+	"github.com/etcd-io/bbolt"
 )
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
@@ -92,8 +92,13 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	}
 	table.data = data
 
+	force := false
+	if options != nil {
+		force = options.force
+	}
+
 	err = data.Update(func(tx *bbolt.Tx) error {
-		if err := table.initalizeConfig(tx); err != nil {
+		if err := table.initalizeConfig(tx, force); err != nil {
 			table.log.Error("Error initializing config: %s", err.Error())
 			return err
 		}
@@ -106,7 +111,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 		if !table.options.DisableSorting {
 			_, err = tx.CreateBucketIfNotExists(insertOrderKey)
 			if err != nil {
-				table.log.Error("Error creating bucket '%s: %s", "insert_index", err.Error())
+				table.log.Error("Error creating bucket '%s: %s", insertOrderKey, err.Error())
 				return err
 			}
 		}
