@@ -52,25 +52,25 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	if params.NewPath == "" {
 		log.Error("NewPath is required")
 		results.Success = false
-		results.Error = fmt.Errorf("NewPath required")
+		results.Error = fmt.Errorf("newPath required")
 		return
 	}
 	if params.OldType == nil {
 		log.Error("OldType is required")
 		results.Success = false
-		results.Error = fmt.Errorf("OldType required")
+		results.Error = fmt.Errorf("oldType required")
 		return
 	}
 	if params.NewType == nil {
 		log.Error("NewType is required")
 		results.Success = false
-		results.Error = fmt.Errorf("NewType required")
+		results.Error = fmt.Errorf("newType required")
 		return
 	}
 	if params.MigrateObject == nil {
 		log.Error("MigrateObject method required")
 		results.Success = false
-		results.Error = fmt.Errorf("MigrateObject method required")
+		results.Error = fmt.Errorf("migrateObject method required")
 		return
 	}
 
@@ -78,7 +78,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	if _, err := os.Stat(backupPath); err == nil {
 		log.Error("Backup copy of table already exists at '%s'", backupPath)
 		results.Success = false
-		results.Error = fmt.Errorf("Backup copy of table exists")
+		results.Error = fmt.Errorf("backup copy of table exists")
 		return
 	}
 

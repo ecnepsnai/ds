@@ -9,9 +9,5 @@ type Options struct {
 }
 
 func (options Options) compare(o Options) bool {
-	if options.DisableSorting != o.DisableSorting {
-		return false
-	}
-
-	return true
+	return options.DisableSorting == o.DisableSorting
 }

@@ -20,7 +20,7 @@ func (table *Table) getConfig(tx *bbolt.Tx) (*Config, error) {
 	configData := tx.Bucket(configKey).Get(configKey)
 	if configData == nil {
 		table.log.Error("No config present for table")
-		return nil, fmt.Errorf("No config present for table")
+		return nil, fmt.Errorf("no config present for table")
 	}
 	config, err := gobDecodeConfig(configData)
 	if err != nil {
@@ -71,13 +71,13 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 		}
 		if !force && config.TypeOf != table.typeOf.Name() {
 			table.log.Error("Cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
-			return fmt.Errorf("Cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
+			return fmt.Errorf("cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
 		}
 		table.log.Debug("TypeOf matches")
 		// I don't know how to test this
 		if !force && config.PrimaryKey != table.primaryKey {
 			table.log.Error("Cannot change primary key of table")
-			return fmt.Errorf("Cannot change primary key of table")
+			return fmt.Errorf("cannot change primary key of table")
 		}
 		table.log.Debug("PrimaryKey matches")
 	}
@@ -98,7 +98,7 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 
 		if !options.compare(table.options) {
 			table.log.Error("Cannot change options of existing table")
-			return fmt.Errorf("Cannot change options of existing table")
+			return fmt.Errorf("cannot change options of existing table")
 		}
 		table.log.Debug("Config matches")
 	}

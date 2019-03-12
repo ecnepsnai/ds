@@ -17,7 +17,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	typeOf := reflect.TypeOf(o)
 	// TypeOf returns and empty string '' if you pass a pointer
 	if len(typeOf.Name()) <= 0 {
-		return nil, fmt.Errorf("Unknown object type provided. Did you pass a pointer?")
+		return nil, fmt.Errorf("unknown object type provided. Did you pass a pointer?")
 	}
 
 	// Gob will panic if you register the same object twice.
@@ -42,7 +42,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 
 	numFields := typeOf.NumField()
 	if numFields == 0 {
-		return nil, fmt.Errorf("Type '%s' has no fields", typeOf.Name())
+		return nil, fmt.Errorf("type '%s' has no fields", typeOf.Name())
 	}
 	i := 0
 	for i < numFields {
@@ -57,7 +57,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 		if strings.Contains(tag, "primary") {
 			if len(primaryKey) > 0 {
 				table.log.Error("Cannot specify multiple primary keys")
-				return nil, fmt.Errorf("Cannot specify multiple primary keys")
+				return nil, fmt.Errorf("cannot specify multiple primary keys")
 			}
 
 			table.log.Debug("Primary key field '%s'", field.Name)
@@ -70,7 +70,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 			uniques = append(uniques, field.Name)
 		} else {
 			table.log.Error("Unknown struct tag '%s' on field '%s'", tag, field.Name)
-			return nil, fmt.Errorf("Unknown struct tag '%s' on field '%s'", tag, field.Name)
+			return nil, fmt.Errorf("unknown struct tag '%s' on field '%s'", tag, field.Name)
 		}
 
 		i++
@@ -78,7 +78,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 
 	if len(primaryKey) <= 0 {
 		table.log.Error("A primary key is required")
-		return nil, fmt.Errorf("A primary key is required")
+		return nil, fmt.Errorf("a primary key is required")
 	}
 
 	table.primaryKey = primaryKey

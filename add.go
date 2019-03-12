@@ -13,7 +13,7 @@ func (table *Table) Add(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 	if table.typeOf.Name() != typeOf.Name() {
 		table.log.Error("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
-		return fmt.Errorf("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
+		return fmt.Errorf("cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
@@ -38,7 +38,7 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 	dataBucket := tx.Bucket(dataKey)
 	if data := dataBucket.Get(primaryKeyBytes); data != nil {
 		table.log.Error("Duplicate primary key")
-		return fmt.Errorf("Duplicate primary key")
+		return fmt.Errorf("duplicate primary key")
 	}
 
 	for _, index := range table.indexes {
@@ -89,7 +89,7 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 		uniqueBucket := tx.Bucket([]byte(uniquePrefix + unique))
 		if data := uniqueBucket.Get(uniqueValueBytes); data != nil {
 			table.log.Error("Non-unique value for unique field '%s'", unique)
-			return fmt.Errorf("Non-unique value for unique field '%s'", unique)
+			return fmt.Errorf("non-unique value for unique field '%s'", unique)
 		}
 		table.log.Debug("Updating unique '%s'", unique)
 		if err := uniqueBucket.Put(uniqueValueBytes, primaryKeyBytes); err != nil {

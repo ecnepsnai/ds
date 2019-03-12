@@ -62,7 +62,7 @@ func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOptions) ([]interface{}, error) {
 	if !table.IsIndexed(fieldName) {
 		table.log.Error("Field '%s' is not indexed", fieldName)
-		return nil, fmt.Errorf("Field '%s' is not indexed", fieldName)
+		return nil, fmt.Errorf("field '%s' is not indexed", fieldName)
 	}
 
 	o := GetOptions{}
@@ -184,7 +184,7 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interfa
 func (table *Table) GetUnique(fieldName string, value interface{}) (interface{}, error) {
 	if !table.IsUnique(fieldName) {
 		table.log.Error("Field '%s' is not unique", fieldName)
-		return nil, fmt.Errorf("Field '%s' is not unique", fieldName)
+		return nil, fmt.Errorf("field '%s' is not unique", fieldName)
 	}
 
 	uniqueValueBytes, err := gobEncode(value)

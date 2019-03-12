@@ -14,7 +14,7 @@ func (table *Table) Delete(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 	if table.typeOf.Name() != typeOf.Name() {
 		table.log.Error("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
-		return fmt.Errorf("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
+		return fmt.Errorf("cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
@@ -71,7 +71,7 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 
 			pkIndex := -1
 			for i, primaryKey := range primaryKeys {
-				if bytes.Compare(primaryKey, primaryKeyBytes) == 0 {
+				if bytes.Equal(primaryKey, primaryKeyBytes) {
 					pkIndex = i
 				}
 			}
