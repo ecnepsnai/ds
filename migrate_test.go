@@ -10,6 +10,8 @@ import (
 
 // Test that a migration succeeded
 func TestMigrate(t *testing.T) {
+	t.Parallel()
+
 	count := 100
 
 	registerTable := func() string {
@@ -89,6 +91,8 @@ func TestMigrate(t *testing.T) {
 
 // Test that entries can be skipped in a migration
 func TestMigrateSkip(t *testing.T) {
+	t.Parallel()
+
 	type oldType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -160,6 +164,8 @@ func TestMigrateSkip(t *testing.T) {
 
 // Test that a migration will fail if an error is returned
 func TestMigrateFail(t *testing.T) {
+	t.Parallel()
+
 	type oldType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -223,6 +229,8 @@ func TestMigrateFail(t *testing.T) {
 
 // Test that the all required parameters are present when requesting a migration
 func TestMigrateParams(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`

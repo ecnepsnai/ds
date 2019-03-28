@@ -7,6 +7,8 @@ import (
 )
 
 func TestRegister(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -19,6 +21,8 @@ func TestRegister(t *testing.T) {
 }
 
 func TestRegisterMultiplePrimaryKey(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary  string `ds:"primary"`
 		Primary2 string `ds:"primary"`
@@ -30,6 +34,8 @@ func TestRegisterMultiplePrimaryKey(t *testing.T) {
 }
 
 func TestRegisterNoPrimaryKey(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Index  string `ds:"index"`
 		Unique string `ds:"unique"`
@@ -41,6 +47,8 @@ func TestRegisterNoPrimaryKey(t *testing.T) {
 }
 
 func TestRegisterMultipleOfSameType(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -57,6 +65,8 @@ func TestRegisterMultipleOfSameType(t *testing.T) {
 }
 
 func TestRegisterNoExportedFields(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		primary string `ds:"primary"`
 		index   string `ds:"index"`
@@ -69,6 +79,8 @@ func TestRegisterNoExportedFields(t *testing.T) {
 }
 
 func TestRegisterNoFields(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct{}
 
 	if _, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err == nil {
@@ -77,6 +89,8 @@ func TestRegisterNoFields(t *testing.T) {
 }
 
 func TestRegisterOtherTags(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary       string `ds:"primary"`
 		SomethingElse string `json:"something_else"`
@@ -88,6 +102,8 @@ func TestRegisterOtherTags(t *testing.T) {
 }
 
 func TestRegisterUnknownStructTag(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Unknown string `ds:"💩"`
 		Index   string `ds:"index"`
@@ -100,6 +116,8 @@ func TestRegisterUnknownStructTag(t *testing.T) {
 }
 
 func TestRegisterPointer(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -114,6 +132,8 @@ func TestRegisterPointer(t *testing.T) {
 }
 
 func TestRegisterOpenClose(t *testing.T) {
+	t.Parallel()
+
 	primaryKey := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -155,6 +175,8 @@ func TestRegisterOpenClose(t *testing.T) {
 }
 
 func TestRegisterLockedFile(t *testing.T) {
+	t.Parallel()
+
 	dsPath := path.Join(tmpDir, randomString(12))
 	file, err := os.OpenFile(dsPath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
@@ -177,6 +199,8 @@ func TestRegisterLockedFile(t *testing.T) {
 }
 
 func TestRegisterWrongType(t *testing.T) {
+	t.Parallel()
+
 	primaryKey := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -214,6 +238,8 @@ func TestRegisterWrongType(t *testing.T) {
 }
 
 func TestRegisterChangeOptions(t *testing.T) {
+	t.Parallel()
+
 	primaryKey := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`

@@ -7,6 +7,8 @@ import (
 
 // Test that you can delete a single object
 func TestDelete(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -44,6 +46,8 @@ func TestDelete(t *testing.T) {
 
 // Test that you can delete many objects by an indexed value
 func TestDeleteIndex(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -76,6 +80,8 @@ func TestDeleteIndex(t *testing.T) {
 
 // Test that deleting an object that is not in the table does not cause an error
 func TestDeleteNotSaved(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -98,6 +104,8 @@ func TestDeleteNotSaved(t *testing.T) {
 }
 
 func TestDeleteTypeMismatch(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -122,6 +130,8 @@ func TestDeleteTypeMismatch(t *testing.T) {
 }
 
 func TestDeletePrimaryKey(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -158,6 +168,8 @@ func TestDeletePrimaryKey(t *testing.T) {
 }
 
 func TestDeleteUnique(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -194,6 +206,8 @@ func TestDeleteUnique(t *testing.T) {
 }
 
 func TestDeleteAll(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`

@@ -6,6 +6,8 @@ import (
 )
 
 func TestGet(t *testing.T) {
+	t.Parallel()
+
 	primaryKey := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -38,6 +40,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetIndex(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -74,6 +78,8 @@ func TestGetIndex(t *testing.T) {
 }
 
 func TestGetIndexSortedAscending(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -118,6 +124,8 @@ func TestGetIndexSortedAscending(t *testing.T) {
 }
 
 func TestGetIndexSortedDescending(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -161,6 +169,8 @@ func TestGetIndexSortedDescending(t *testing.T) {
 }
 
 func TestGetIndexSortedNonSortedTable(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -198,6 +208,8 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 }
 
 func TestGetUnique(t *testing.T) {
+	t.Parallel()
+
 	unique := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -230,6 +242,8 @@ func TestGetUnique(t *testing.T) {
 }
 
 func TestGetNilPrimaryKey(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -251,6 +265,8 @@ func TestGetNilPrimaryKey(t *testing.T) {
 }
 
 func TestGetNonindexedField(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -272,6 +288,8 @@ func TestGetNonindexedField(t *testing.T) {
 }
 
 func TestGetNonuniqueField(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -293,6 +311,8 @@ func TestGetNonuniqueField(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -328,6 +348,8 @@ func TestGetAll(t *testing.T) {
 }
 
 func TestGetAllSortedAscending(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -372,6 +394,8 @@ func TestGetAllSortedAscending(t *testing.T) {
 }
 
 func TestGetAllSortedDescending(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -415,6 +439,8 @@ func TestGetAllSortedDescending(t *testing.T) {
 }
 
 func TestGetNoResults(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -460,6 +486,8 @@ func TestGetNoResults(t *testing.T) {
 }
 
 func TestGetIndexMaximum(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -519,6 +547,8 @@ func TestGetIndexMaximum(t *testing.T) {
 }
 
 func TestGetAllMaximum(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -578,6 +608,8 @@ func TestGetAllMaximum(t *testing.T) {
 }
 
 func TestGetIndexSortedMaximum(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`
@@ -637,6 +669,8 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 }
 
 func TestGetAllSortedMaximum(t *testing.T) {
+	t.Parallel()
+
 	index := randomString(12)
 	type exampleType struct {
 		Primary string `ds:"primary"`

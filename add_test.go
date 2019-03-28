@@ -6,6 +6,8 @@ import (
 )
 
 func TestAdd(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -28,6 +30,8 @@ func TestAdd(t *testing.T) {
 }
 
 func TestAddIndex(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -55,6 +59,8 @@ func TestAddIndex(t *testing.T) {
 }
 
 func TestAddTypeMismatch(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -79,6 +85,8 @@ func TestAddTypeMismatch(t *testing.T) {
 }
 
 func TestAddDuplicatePrimaryKey(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
@@ -112,6 +120,8 @@ func TestAddDuplicatePrimaryKey(t *testing.T) {
 }
 
 func TestAddDuplicateUnique(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`

@@ -9,6 +9,8 @@ import (
 
 // Test that an object can be updated
 func TestUpdate(t *testing.T) {
+	t.Parallel()
+
 	type exampleType struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
