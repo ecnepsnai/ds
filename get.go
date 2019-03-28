@@ -112,7 +112,7 @@ func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOp
 
 func (table *Table) getIndexUnsorted(keys [][]byte, options GetOptions) ([]interface{}, error) {
 	length := len(keys)
-	if options.Max > 0 {
+	if options.Max > 0 && length > options.Max {
 		length = options.Max
 	}
 
@@ -160,7 +160,7 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interfa
 	})
 
 	length := len(keys)
-	if options.Max > 0 {
+	if options.Max > 0 && length > options.Max {
 		length = options.Max
 	}
 	var sortedObject = make([]interface{}, length)

@@ -496,6 +496,26 @@ func TestGetIndexMaximum(t *testing.T) {
 	if returned != max {
 		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
 	}
+
+	table.DeleteAll()
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Index:   index,
+		Value:   0,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	objects, err = table.GetIndex("Index", index, &GetOptions{Max: max})
+	if err != nil {
+		t.Errorf("Error getting many entires: %s", err.Error())
+	}
+
+	returned = len(objects)
+	if returned != 1 {
+		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
+	}
 }
 
 func TestGetAllMaximum(t *testing.T) {
@@ -534,6 +554,26 @@ func TestGetAllMaximum(t *testing.T) {
 	returned := len(objects)
 	if returned != max {
 		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
+	}
+
+	table.DeleteAll()
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Index:   index,
+		Value:   0,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	objects, err = table.GetAll(&GetOptions{Max: max})
+	if err != nil {
+		t.Errorf("Error getting many entires: %s", err.Error())
+	}
+
+	returned = len(objects)
+	if returned != 1 {
+		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
 	}
 }
 
@@ -574,6 +614,26 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 	if returned != max {
 		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
 	}
+
+	table.DeleteAll()
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Index:   index,
+		Value:   0,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	objects, err = table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: true, Max: max})
+	if err != nil {
+		t.Errorf("Error getting many entires: %s", err.Error())
+	}
+
+	returned = len(objects)
+	if returned != 1 {
+		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
+	}
 }
 
 func TestGetAllSortedMaximum(t *testing.T) {
@@ -612,5 +672,25 @@ func TestGetAllSortedMaximum(t *testing.T) {
 	returned := len(objects)
 	if returned != max {
 		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
+	}
+
+	table.DeleteAll()
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Index:   index,
+		Value:   0,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	objects, err = table.GetAll(&GetOptions{Sorted: true, Ascending: true, Max: max})
+	if err != nil {
+		t.Errorf("Error getting many entires: %s", err.Error())
+	}
+
+	returned = len(objects)
+	if returned != 1 {
+		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
 	}
 }
