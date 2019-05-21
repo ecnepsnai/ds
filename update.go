@@ -7,7 +7,7 @@ import "github.com/etcd-io/bbolt"
 func (table *Table) Update(o interface{}) error {
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
-		var index uint64
+		var index *uint64
 		if !table.options.DisableSorting {
 			i, err := table.indexForObject(tx, o)
 			if err != nil {
@@ -24,8 +24,10 @@ func (table *Table) Update(o interface{}) error {
 		}
 
 		if !table.options.DisableSorting {
-			if err := table.setInsertIndexForObject(tx, o, index); err != nil {
-				return err
+			if index != nil {
+				if err := table.setInsertIndexForObject(tx, o, *index); err != nil {
+					return err
+				}
 			}
 
 			config, err := table.getConfig(tx)

@@ -7,18 +7,21 @@ import (
 	"github.com/etcd-io/bbolt"
 )
 
-func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) uint64 {
+func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) *uint64 {
 	indexBucket := tx.Bucket(insertOrderKey)
 	b := indexBucket.Get(primaryKey)
+	if len(b) == 0 {
+		return nil
+	}
 	index := binary.LittleEndian.Uint64(b)
-	return index
+	return &index
 }
 
-func (table *Table) indexForObject(tx *bbolt.Tx, object interface{}) (uint64, error) {
+func (table *Table) indexForObject(tx *bbolt.Tx, object interface{}) (*uint64, error) {
 	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
 	pkBytes, err := gobEncode(pk)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return table.indexForPrimaryKey(tx, pkBytes), nil
 }

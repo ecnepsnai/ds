@@ -8,7 +8,7 @@ import (
 )
 
 // Test that an object can be updated
-func TestUpdate(t *testing.T) {
+func TestUpdateExistingValue(t *testing.T) {
 	t.Parallel()
 
 	type exampleType struct {
@@ -40,7 +40,7 @@ func TestUpdate(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		index = i
+		index = *i
 
 		config, err := table.getConfig(tx)
 		if err != nil {
@@ -69,7 +69,7 @@ func TestUpdate(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		newIndex = i
+		newIndex = *i
 
 		config, err := table.getConfig(tx)
 		if err != nil {
@@ -99,5 +99,32 @@ func TestUpdate(t *testing.T) {
 	if len(objects) > 0 {
 		// If this fails, then the indexes aren't being cleaned up correctly
 		t.Errorf("Unexpected number of objects returned. Expected 0 got %d", len(objects))
+	}
+}
+
+// Test that a new entry will still be added with an update
+func TestUpdateNewValue(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	object := exampleType{
+		Primary: randomString(12),
+		Index:   randomString(12),
+		Unique:  randomString(12),
+	}
+
+	err = table.Update(object)
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 }

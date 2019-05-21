@@ -4,6 +4,8 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/etcd-io/bbolt"
 )
 
 func TestRegister(t *testing.T) {
@@ -272,5 +274,40 @@ func TestRegisterChangeOptions(t *testing.T) {
 	})
 	if err == nil {
 		t.Errorf("No error seen while registering table with changed options")
+	}
+}
+
+// Test that registering a DS on an existing, unknown bolt table will return an error
+func TestRegisterExistingBoltTable(t *testing.T) {
+	t.Parallel()
+
+	dsPath := path.Join(tmpDir, randomString(12))
+	db, err := bbolt.Open(dsPath, 0644, nil)
+	if err != nil {
+		t.Errorf("Error opening bolt db: %s", err.Error())
+	}
+	err = db.Update(func(tx *bbolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(randomString(12)))
+		if err != nil {
+			return err
+		}
+		return bucket.Put([]byte(randomString(12)), []byte(randomString(12)))
+	})
+	if err != nil {
+		t.Errorf("Error adding data to table: %s", err.Error())
+	}
+	db.Close()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	_, err = Register(exampleType{}, dsPath, &Options{
+		DisableSorting: true,
+	})
+	if err == nil {
+		t.Errorf("No error seen when expected")
 	}
 }

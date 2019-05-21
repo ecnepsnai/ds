@@ -85,6 +85,11 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	table.indexes = indexes
 	table.uniques = uniques
 
+	if err := checkForExistingBoltTable(filePath); err != nil {
+		table.log.Error("Existing file '%s' that is not recognized as a DS table", filePath)
+		return nil, fmt.Errorf("bad table file")
+	}
+
 	data, err := bbolt.Open(filePath, os.ModePerm, nil)
 	if err != nil {
 		table.log.Error("Error opening bolt database: %s", err.Error())
@@ -141,6 +146,29 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	table.log.Info("Datastore '%s' opened at '%s'", table.Name, filePath)
 
 	return &table, nil
+}
+
+func checkForExistingBoltTable(filePath string) error {
+	if _, err := os.Stat(filePath); err != nil {
+		return nil
+	}
+
+	db, err := bbolt.Open(filePath, os.ModePerm, nil)
+	if err != nil {
+		return err
+	}
+	err = db.View(func(tx *bbolt.Tx) error {
+		defer recover()
+		bucket := tx.Bucket(configKey)
+		if bucket == nil {
+			return fmt.Errorf("no bucket found")
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func registerGobType(o interface{}) {

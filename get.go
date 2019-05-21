@@ -138,7 +138,10 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interfa
 	err := table.data.View(func(tx *bbolt.Tx) error {
 		for _, key := range keys {
 			index := table.indexForPrimaryKey(tx, key)
-			orderMap[index] = key
+			if index == nil {
+				return fmt.Errorf("no index found")
+			}
+			orderMap[*index] = key
 		}
 
 		return nil
