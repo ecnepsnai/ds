@@ -157,6 +157,9 @@ func checkForExistingBoltTable(filePath string) error {
 	if err != nil {
 		return err
 	}
+
+	defer db.Close()
+
 	err = db.View(func(tx *bbolt.Tx) error {
 		defer recover()
 		bucket := tx.Bucket(configKey)
