@@ -2,9 +2,10 @@ package ds
 
 import (
 	"reflect"
+	"sync"
 
-	"github.com/etcd-io/bbolt"
 	"github.com/ecnepsnai/logtic"
+	"github.com/etcd-io/bbolt"
 )
 
 // Table describes a ds table. A table is mapped to a single registered object type and contains
@@ -18,6 +19,7 @@ type Table struct {
 	uniques    []string
 	data       *bbolt.DB
 	options    Options
+	lock       *sync.RWMutex
 }
 
 // Close will close the table. This will not panic if the table has not been opened or already been closed.

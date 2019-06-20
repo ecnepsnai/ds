@@ -11,6 +11,9 @@ import (
 
 // Delete will delete the provided object and clean indexes
 func (table *Table) Delete(o interface{}) error {
+	table.lock.Lock()
+	defer table.lock.Unlock()
+
 	typeOf := reflect.TypeOf(o)
 	if table.typeOf.Name() != typeOf.Name() {
 		table.log.Error("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
