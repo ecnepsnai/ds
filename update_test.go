@@ -128,3 +128,37 @@ func TestUpdateNewValue(t *testing.T) {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 }
+
+// Test that many new entries will still be added with an update
+func TestUpdateManyNewValue(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary int `ds:"primary"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	expected := 10
+
+	i := 0
+	for i < expected {
+		if err := table.Update(exampleType{i}); err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		i++
+	}
+
+	objs, err := table.GetAll(&GetOptions{Sorted: true})
+	if err != nil {
+		t.Errorf("Error getting all from table: %s", err.Error())
+	}
+
+	result := len(objs)
+	if result != expected {
+		t.Errorf("Unexpected length. Expected %d got %d", expected, result)
+	}
+}

@@ -1,12 +1,27 @@
 package ds
 
-import "github.com/etcd-io/bbolt"
+import (
+	"github.com/etcd-io/bbolt"
+)
 
 // Update will update an existing object in the table. The primary key must match for this object
 // otherwise it will just be inserted as a new object.
 func (table *Table) Update(o interface{}) error {
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
+		// Check for an existing object, if nothing found then just add it and call it a day
+		primaryKeyBytes, err := table.primaryKeyBytes(o)
+		if err != nil {
+			return err
+		}
+		existing, err := table.getPrimaryKey(primaryKeyBytes)
+		if err != nil {
+			return err
+		}
+		if existing == nil {
+			return table.add(tx, o)
+		}
+
 		var index *uint64
 		if !table.options.DisableSorting {
 			i, err := table.indexForObject(tx, o)

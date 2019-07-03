@@ -49,11 +49,8 @@ func (table *Table) DeleteUnique(field string, o interface{}) error {
 }
 
 func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
-	valueOf := reflect.Indirect(reflect.ValueOf(o))
-	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
-	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
+	primaryKeyBytes, err := table.primaryKeyBytes(o)
 	if err != nil {
-		table.log.Error("Cannot encode primary key value: %s", err.Error())
 		return err
 	}
 
@@ -122,6 +119,7 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 		}
 	}
 
+	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	for _, unique := range table.uniques {
 		uniqueValue := valueOf.FieldByName(unique)
 		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
