@@ -18,6 +18,9 @@ type MigrateParams struct {
 	OldType interface{}
 	// NewType the new type
 	NewType interface{}
+	// DisableSorting if the current table is sorted, set this to true to disable sorting
+	// Note: This is irreversible!
+	DisableSorting bool
 	// MigrateObject method called for each entry in the table. Return a new type or error.
 	// migration is halted if an error is returned.
 	// Return (nil, nil) and the entry will be skipped from migration.
@@ -89,7 +92,16 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		return
 	}
 
-	oldTable, err := Register(params.OldType, backupPath, &Options{force: true})
+	options, err := getTableOptions(backupPath)
+	if err != nil {
+		log.Error("Error getting table options: %s", err.Error())
+		results.Success = false
+		results.Error = err
+		return
+	}
+	options.force = true
+
+	oldTable, err := Register(params.OldType, backupPath, options)
 	if err != nil {
 		log.Error("Error registering old table: %s", err.Error())
 		results.Success = false
@@ -98,7 +110,11 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	}
 	defer oldTable.Close()
 
-	table, err := Register(params.NewType, params.NewPath, &oldTable.options)
+	if params.DisableSorting && !oldTable.options.DisableSorting {
+		options.DisableSorting = true
+	}
+
+	table, err := Register(params.NewType, params.NewPath, options)
 	if err != nil {
 		log.Error("Error registering new table: %s", err.Error())
 		results.Success = false

@@ -16,6 +16,31 @@ type Config struct {
 	LastInsertIndex uint64
 }
 
+func getTableOptions(tablePath string) (*Options, error) {
+	t, err := bbolt.Open(tablePath, 0644, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer t.Close()
+
+	var optionsData []byte
+
+	err = t.View(func(tx *bbolt.Tx) error {
+		configBucket := tx.Bucket(configKey)
+		optionsData = configBucket.Get(optionsKey)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if optionsData == nil || len(optionsData) == 0 {
+		return nil, nil
+	}
+
+	return gobDecodeOptions(optionsData)
+}
+
 func (table *Table) getConfig(tx *bbolt.Tx) (*Config, error) {
 	configData := tx.Bucket(configKey).Get(configKey)
 	if configData == nil {
