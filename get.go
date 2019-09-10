@@ -232,6 +232,11 @@ func (table *Table) GetAll(options *GetOptions) ([]interface{}, error) {
 		o = *options
 	}
 
+	if o.Sorted && table.options.DisableSorting {
+		table.log.Warn("Requested sorted results from unsorted table")
+		o.Sorted = false
+	}
+
 	if o.Sorted {
 		return table.getAllSorted(o)
 	}
