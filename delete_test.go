@@ -61,7 +61,7 @@ func TestDeleteIndex(t *testing.T) {
 
 	index := randomString(12)
 	i := 0
-	for i < 100 {
+	for i < 10 {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
 			Index:   index,

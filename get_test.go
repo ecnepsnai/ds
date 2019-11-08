@@ -55,7 +55,7 @@ func TestGetIndex(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -93,7 +93,7 @@ func TestGetIndexSortedAscending(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -139,7 +139,7 @@ func TestGetIndexSortedDescending(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -184,7 +184,7 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -325,7 +325,7 @@ func TestGetAll(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -363,7 +363,7 @@ func TestGetAllSortedAscending(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -409,7 +409,7 @@ func TestGetAllSortedDescending(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -501,7 +501,7 @@ func TestGetIndexMaximum(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -514,7 +514,7 @@ func TestGetIndexMaximum(t *testing.T) {
 		i++
 	}
 
-	max := 20
+	max := 5
 	objects, err := table.GetIndex("Index", index, &GetOptions{Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
@@ -562,7 +562,7 @@ func TestGetAllMaximum(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -575,7 +575,7 @@ func TestGetAllMaximum(t *testing.T) {
 		i++
 	}
 
-	max := 20
+	max := 5
 	objects, err := table.GetAll(&GetOptions{Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
@@ -623,7 +623,7 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -636,7 +636,7 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 		i++
 	}
 
-	max := 20
+	max := 5
 	objects, err := table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: true, Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
@@ -684,7 +684,7 @@ func TestGetAllSortedMaximum(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	for i < count {
 		err = table.Add(exampleType{
 			Primary: randomString(12),
@@ -697,7 +697,7 @@ func TestGetAllSortedMaximum(t *testing.T) {
 		i++
 	}
 
-	max := 20
+	max := 5
 	objects, err := table.GetAll(&GetOptions{Sorted: true, Ascending: true, Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())

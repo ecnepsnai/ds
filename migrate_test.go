@@ -12,7 +12,7 @@ import (
 func TestMigrate(t *testing.T) {
 	t.Parallel()
 
-	count := 100
+	count := 10
 
 	registerTable := func() string {
 		type user struct {
@@ -111,7 +111,7 @@ func TestMigrateSkip(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	index := randomString(12)
 	for i < count {
 		err = table.Add(oldType{
@@ -184,7 +184,7 @@ func TestMigrateFail(t *testing.T) {
 	}
 
 	i := 0
-	count := 100
+	count := 10
 	index := randomString(12)
 	for i < count {
 		err = table.Add(oldType{
