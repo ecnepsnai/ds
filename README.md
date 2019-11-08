@@ -96,8 +96,8 @@ type oldType struct{}
 type newType struct{}
 
 result := ds.Migrate(ds.MigrateParams{
-    TablePath: pathToTable,
-    NewPath: pathToTable,
+    TablePath: "/path/to/table.db",
+    NewPath: "/path/to/table.db", // You can specify the same path, or a new one if you want
     OldType: oldType{},
     NewType: newType{},
     MigrateObject: func(o interface{}) (interface{}, error) {

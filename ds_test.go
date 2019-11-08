@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/ecnepsnai/logtic"
@@ -13,7 +12,6 @@ import (
 
 var tmpDir string
 var verbose bool
-var logFile *logtic.File
 
 func isTestVerbose() bool {
 	for _, arg := range os.Args {
@@ -33,19 +31,17 @@ func testSetup() {
 	tmpDir = tmp
 
 	if verbose {
-		l, _, err := logtic.New(path.Join(tmp, "ds.log"), logtic.LevelDebug, "")
-		if err != nil {
+		logtic.Log.FilePath = "/dev/null"
+		logtic.Log.Level = logtic.LevelDebug
+		if err := logtic.Open(); err != nil {
 			panic(err)
 		}
-		logFile = l
 	}
 }
 
 func testTeardown() {
 	os.RemoveAll(tmpDir)
-	if logFile != nil {
-		logFile.Close()
-	}
+	logtic.Close()
 }
 
 func TestMain(m *testing.M) {
