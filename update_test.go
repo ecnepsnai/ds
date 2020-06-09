@@ -162,3 +162,25 @@ func TestUpdateManyNewValue(t *testing.T) {
 		t.Errorf("Unexpected length. Expected %d got %d", expected, result)
 	}
 }
+
+func TestUpdatePointer(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary int `ds:"primary"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	if err := table.Add(exampleType{1}); err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	err = table.Update(&exampleType{1})
+	if err == nil {
+		t.Errorf("No error seen when one expected when updating pointer")
+	}
+}

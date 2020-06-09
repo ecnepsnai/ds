@@ -14,7 +14,10 @@ func (table *Table) Add(o interface{}) error {
 	defer table.lock.Unlock()
 
 	typeOf := reflect.TypeOf(o)
-	if table.typeOf.Name() != typeOf.Name() {
+	if typeOf.Kind() == reflect.Ptr {
+		table.log.Error("Refusing to add a pointer to the table")
+		return fmt.Errorf("refusing to add a pointer to the table")
+	} else if table.typeOf.Name() != typeOf.Name() {
 		table.log.Error("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 		return fmt.Errorf("cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}

@@ -34,7 +34,7 @@ func tryCloseData(data *bbolt.DB) {
 	data.Close()
 }
 
-// IsIndexed is the given field indexes
+// IsIndexed is the given field indexed
 func (table *Table) IsIndexed(field string) bool {
 	for _, index := range table.indexes {
 		if index == field {

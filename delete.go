@@ -15,9 +15,13 @@ func (table *Table) Delete(o interface{}) error {
 	defer table.lock.Unlock()
 
 	typeOf := reflect.TypeOf(o)
-	if table.typeOf.Name() != typeOf.Name() {
-		table.log.Error("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
-		return fmt.Errorf("cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
+
+	if typeOf.Kind() == reflect.Ptr {
+		table.log.Error("Refusing to delete a pointer from a table")
+		return fmt.Errorf("refusing to delete a pointer from a table")
+	} else if table.typeOf.Name() != typeOf.Name() {
+		table.log.Error("Cannot delete type '%s' from table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
+		return fmt.Errorf("cannot delete type '%s' from table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
@@ -161,7 +165,7 @@ func (table *Table) DeleteAllIndex(fieldName string, value interface{}) error {
 
 // DeleteAll delete all objects from the table
 func (table *Table) DeleteAll() error {
-	err := table.data.Update(func(tx *bbolt.Tx) error {
+	return table.data.Update(func(tx *bbolt.Tx) error {
 		if err := table.purgeBucket(tx, dataKey); err != nil {
 			return err
 		}
@@ -189,7 +193,6 @@ func (table *Table) DeleteAll() error {
 
 		return nil
 	})
-	return err
 }
 
 func (table *Table) purgeBucket(tx *bbolt.Tx, bucketName []byte) error {

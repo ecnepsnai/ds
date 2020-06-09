@@ -103,6 +103,33 @@ func TestDeleteNotSaved(t *testing.T) {
 	}
 }
 
+// Test that attempting to delete a pointer returns an error
+func TestDeletePointer(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	object := exampleType{
+		Primary: randomString(12),
+		Index:   randomString(12),
+		Unique:  randomString(12),
+	}
+	err = table.Delete(&object)
+	if err == nil {
+		t.Error("No error seen while attempting to delete a pointer from a table")
+	}
+}
+
+// Test that attempting to delete an object of the wrong type returns an error
 func TestDeleteTypeMismatch(t *testing.T) {
 	t.Parallel()
 
@@ -129,6 +156,7 @@ func TestDeleteTypeMismatch(t *testing.T) {
 	}
 }
 
+// Test that you can delete an object by its primary key's value
 func TestDeletePrimaryKey(t *testing.T) {
 	t.Parallel()
 
@@ -167,6 +195,7 @@ func TestDeletePrimaryKey(t *testing.T) {
 	}
 }
 
+// Test that you can delete an object by any unique field's value
 func TestDeleteUnique(t *testing.T) {
 	t.Parallel()
 
@@ -205,6 +234,7 @@ func TestDeleteUnique(t *testing.T) {
 	}
 }
 
+// Test that you can delete all data from the table
 func TestDeleteAll(t *testing.T) {
 	t.Parallel()
 

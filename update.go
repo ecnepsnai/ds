@@ -10,6 +10,10 @@ import (
 // Update will update an existing object in the table. The primary key must match for this object
 // otherwise it will just be inserted as a new object.
 func (table *Table) Update(o interface{}) error {
+	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
+		table.log.Error("Refusing to update pointer from table")
+		return fmt.Errorf("refusing to update pointer from table")
+	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
 		// Check for an existing object, if nothing found then just add it and call it a day

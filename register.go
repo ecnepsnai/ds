@@ -16,9 +16,11 @@ import (
 // at the specified file path.
 func Register(o interface{}, filePath string, options *Options) (*Table, error) {
 	typeOf := reflect.TypeOf(o)
-	// TypeOf returns and empty string '' if you pass a pointer
-	if len(typeOf.Name()) <= 0 {
-		return nil, fmt.Errorf("unknown object type provided. Did you pass a pointer?")
+	if typeOf.Kind() == reflect.Ptr {
+		return nil, fmt.Errorf("refusing to register table to a pointer")
+	}
+	if typeOf.Kind() == reflect.Struct && typeOf.Name() == "" {
+		fmt.Fprintf(os.Stderr, "WARNING: registering a table to an anonmymous struct is unsupported\n")
 	}
 
 	// Gob will panic if you register the same object twice.

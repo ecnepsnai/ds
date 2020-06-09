@@ -3,6 +3,7 @@ package ds
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	"github.com/ecnepsnai/logtic"
 )
@@ -16,7 +17,7 @@ type MigrateParams struct {
 	NewPath string
 	// OldType the old type (current type of the table)
 	OldType interface{}
-	// NewType the new type
+	// NewType the new type. This can be the same as the OldType.
 	NewType interface{}
 	// DisableSorting if the current table is sorted, set this to true to disable sorting
 	// Note: This is irreversible!
@@ -74,6 +75,18 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		log.Error("MigrateObject method required")
 		results.Success = false
 		results.Error = fmt.Errorf("migrateObject method required")
+		return
+	}
+	if typeOf := reflect.TypeOf(params.NewType); typeOf.Kind() == reflect.Ptr {
+		log.Error("NewType cannot be a pointer")
+		results.Success = false
+		results.Error = fmt.Errorf("newType cannot be a pointer")
+		return
+	}
+	if typeOf := reflect.TypeOf(params.OldType); typeOf.Kind() == reflect.Ptr {
+		log.Error("OldType cannot be a pointer")
+		results.Success = false
+		results.Error = fmt.Errorf("oldType cannot be a pointer")
 		return
 	}
 

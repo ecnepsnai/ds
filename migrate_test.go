@@ -292,6 +292,34 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
+	// New type is pointer
+	stats = Migrate(MigrateParams{
+		TablePath: tablePath,
+		NewType:   &exampleType{},
+		OldType:   exampleType{},
+		NewPath:   tablePath,
+		MigrateObject: func(o interface{}) (interface{}, error) {
+			return nil, nil
+		},
+	})
+	if stats.Error == nil {
+		t.Errorf("No error seen for invalid migration request")
+	}
+
+	// Old type is pointer
+	stats = Migrate(MigrateParams{
+		TablePath: tablePath,
+		NewType:   exampleType{},
+		OldType:   &exampleType{},
+		NewPath:   tablePath,
+		MigrateObject: func(o interface{}) (interface{}, error) {
+			return nil, nil
+		},
+	})
+	if stats.Error == nil {
+		t.Errorf("No error seen for invalid migration request")
+	}
+
 	// Missing new path
 	stats = Migrate(MigrateParams{
 		TablePath: tablePath,

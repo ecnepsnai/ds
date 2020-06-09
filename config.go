@@ -99,7 +99,6 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 			return fmt.Errorf("cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
 		}
 		table.log.Debug("TypeOf matches")
-		// I don't know how to test this
 		if !force && config.PrimaryKey != table.primaryKey {
 			table.log.Error("Cannot change primary key of table")
 			return fmt.Errorf("cannot change primary key of table")

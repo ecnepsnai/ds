@@ -311,3 +311,26 @@ func TestRegisterExistingBoltTable(t *testing.T) {
 		t.Errorf("No error seen when expected")
 	}
 }
+
+func TestRegisterChangePrimaryKey(t *testing.T) {
+	t.Parallel()
+
+	tablePath := path.Join(tmpDir, randomString(12))
+
+	// Register first table
+	table, err := Register(struct {
+		Primary string `ds:"primary"`
+	}{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+	table.Close()
+
+	// Try to change the primary key
+	table, err = Register(struct {
+		Secondary string `ds:"primary"`
+	}{}, tablePath, nil)
+	if err == nil {
+		t.Errorf("No error seen when one expected while changing the tables primary key")
+	}
+}
