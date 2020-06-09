@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // Add will add a new object to the table. o must the the same type that was used to register the table and cannot be a pointer.

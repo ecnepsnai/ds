@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/ecnepsnai/ds"
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 type results struct {

@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/ecnepsnai/logtic"
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type

@@ -1,7 +1,10 @@
 package ds
 
 import (
-	"github.com/etcd-io/bbolt"
+	"fmt"
+	"reflect"
+
+	"go.etcd.io/bbolt"
 )
 
 // Update will update an existing object in the table. The primary key must match for this object

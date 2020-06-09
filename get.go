@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // GetOptions describes options for getting entries from a DS table

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/ecnepsnai/logtic"
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // Table describes a ds table. A table is mapped to a single registered object type and contains

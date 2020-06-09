@@ -3,7 +3,7 @@ package ds
 import (
 	"fmt"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // Config describes ds table configuration

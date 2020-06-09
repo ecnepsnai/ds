@@ -5,7 +5,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 func TestRegister(t *testing.T) {

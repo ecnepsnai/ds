@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"reflect"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) *uint64 {

@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // Test that an object can be updated
