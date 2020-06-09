@@ -1,0 +1,6 @@
+stats is a command line tool to print statistics about a DS table
+
+Usage ./stats [options] <table path>
+Options:
+ -j --json  Print stats as a JSON object
+ -h --help  Print this help and exit

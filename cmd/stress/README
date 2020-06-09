@@ -1,0 +1,7 @@
+stress is a command line tool to stress a DS table.
+
+Usage ./stress [options]
+Options:
+ -w --work-dir	Work directory where database files are outputted. Defaults to temporary directory.
+ -t --threads	Number of threads. Defaults to 4.
+ -n --count	Number of items to insert. Defaults to 1 billion.
