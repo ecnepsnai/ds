@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/etcd-io/bbolt"
 	"github.com/ecnepsnai/ds"
+	"github.com/etcd-io/bbolt"
 )
 
 type results struct {
@@ -19,9 +19,10 @@ type results struct {
 	Name            string   `json:"name"`
 	TypeOf          string   `json:"type_of"`
 	PrimaryKey      string   `json:"primary_key"`
-	Indexes         []string `json:"indexes"`
-	Uniques         []string `json:"uniques"`
+	IndexedFields   []string `json:"indexed_fields"`
+	UniqueFields    []string `json:"unique_fields"`
 	LastInsertIndex uint64   `json:"last_insert_index"`
+	Options         []string `json:"options"`
 	Size            int64    `json:"size"`
 }
 
@@ -81,15 +82,16 @@ func main() {
 		return
 	}
 	fmt.Printf("Total entries: %d\n", r.EntryCount)
-	fmt.Printf("Total Indexes: %d\n", r.IndexCount)
-	fmt.Printf("Total Unique Indexes: %d\n", r.UniqueCount)
+	fmt.Printf("Total indexes: %d\n", r.IndexCount)
+	fmt.Printf("Total unique indexes: %d\n", r.UniqueCount)
 	fmt.Printf("Name: %s\n", r.Name)
 	fmt.Printf("Type: %s\n", r.TypeOf)
-	fmt.Printf("Primary Key Field: %s\n", r.PrimaryKey)
-	fmt.Printf("Indexed Fields: %s\n", r.Indexes)
-	fmt.Printf("Unique Fields: %s\n", r.Uniques)
-	fmt.Printf("Last Insert Index: %d\n", r.LastInsertIndex)
-	fmt.Printf("Store Size: %d\n", r.Size)
+	fmt.Printf("Primary key field: %s\n", r.PrimaryKey)
+	fmt.Printf("Indexed fields: %s\n", r.IndexedFields)
+	fmt.Printf("Unique fields: %s\n", r.UniqueFields)
+	fmt.Printf("Last insert index: %d\n", r.LastInsertIndex)
+	fmt.Printf("Options: %s\n", r.Options)
+	fmt.Printf("Store size: %dB\n", r.Size)
 }
 
 type bucket struct {
@@ -132,6 +134,15 @@ func run(tx *bbolt.Tx) (r results) {
 		return nil
 	})
 
+	if dataBucket.Bucket == nil {
+		fmt.Fprintf(os.Stderr, "Invalid input file: data bucket not found. Is this a valid DS database?\n")
+		os.Exit(2)
+	}
+	if configBucket.Bucket == nil {
+		fmt.Fprintf(os.Stderr, "Invalid input file: config bucket not found. Is this a valid DS database?\n")
+		os.Exit(2)
+	}
+
 	entryCount := 0
 	dataBucket.Bucket.ForEach(func(k []byte, v []byte) error {
 		entryCount++
@@ -161,15 +172,27 @@ func run(tx *bbolt.Tx) (r results) {
 	data := configBucket.Bucket.Get([]byte("config"))
 	config, err := gobDecodeConfig(data)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Invalid input file: error reading config data: %s\n", err.Error())
+		os.Exit(2)
+	}
+
+	optionsData := configBucket.Bucket.Get([]byte("options"))
+	options, err := gobDecodeOptions(optionsData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid input file: error reading table options: %s\n", err.Error())
+		os.Exit(2)
 	}
 
 	r.Name = config.Name
 	r.TypeOf = config.TypeOf
 	r.PrimaryKey = config.PrimaryKey
-	r.Indexes = config.Indexes
-	r.Uniques = config.Uniques
+	r.IndexedFields = config.Indexes
+	r.UniqueFields = config.Uniques
 	r.LastInsertIndex = config.LastInsertIndex
+	r.Options = []string{}
+	if options.DisableSorting {
+		r.Options = append(r.Options, "disable_sorting")
+	}
 
 	return
 }
@@ -184,6 +207,17 @@ func printHelpAndExit() {
 
 func gobDecodeConfig(b []byte) (*ds.Config, error) {
 	var w = ds.Config{}
+
+	reader := bytes.NewReader(b)
+	dec := gob.NewDecoder(reader)
+	if err := dec.Decode(&w); err != nil {
+		return nil, err
+	}
+	return &w, nil
+}
+
+func gobDecodeOptions(b []byte) (*ds.Options, error) {
+	var w = ds.Options{}
 
 	reader := bytes.NewReader(b)
 	dec := gob.NewDecoder(reader)
