@@ -1,4 +1,4 @@
-package ds
+package ds_test
 
 import (
 	"crypto/rand"

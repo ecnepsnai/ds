@@ -1,8 +1,10 @@
-package ds
+package ds_test
 
 import (
 	"path"
 	"testing"
+
+	"github.com/ecnepsnai/ds"
 )
 
 // Test that you can delete a single object
@@ -15,7 +17,7 @@ func TestDelete(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -54,7 +56,7 @@ func TestDeleteIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -88,7 +90,7 @@ func TestDeleteNotSaved(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -113,7 +115,7 @@ func TestDeletePointer(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -139,7 +141,7 @@ func TestDeleteTypeMismatch(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -166,7 +168,7 @@ func TestDeletePrimaryKey(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -205,7 +207,7 @@ func TestDeleteUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -244,7 +246,7 @@ func TestDeleteAll(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}

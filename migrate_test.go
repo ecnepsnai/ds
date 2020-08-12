@@ -1,4 +1,4 @@
-package ds
+package ds_test
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/ecnepsnai/ds"
 )
 
 // Test that a migration succeeded
@@ -23,7 +25,7 @@ func TestMigrate(t *testing.T) {
 		}
 
 		tp := path.Join(tmpDir, randomString(12))
-		table, err := Register(user{}, tp, nil)
+		table, err := ds.Register(user{}, tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
@@ -62,7 +64,7 @@ func TestMigrate(t *testing.T) {
 		Password string
 	}
 
-	stats := Migrate(MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   oldUser{},
 		NewType:   user{},
@@ -105,7 +107,7 @@ func TestMigrateSkip(t *testing.T) {
 	}
 
 	tablePath := path.Join(tmpDir, randomString(12))
-	table, err := Register(oldType{}, tablePath, nil)
+	table, err := ds.Register(oldType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -128,7 +130,7 @@ func TestMigrateSkip(t *testing.T) {
 	table.Close()
 
 	i = 0
-	stats := Migrate(MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   oldType{},
 		NewType:   newType{},
@@ -178,7 +180,7 @@ func TestMigrateFail(t *testing.T) {
 	}
 
 	tablePath := path.Join(tmpDir, randomString(12))
-	table, err := Register(oldType{}, tablePath, nil)
+	table, err := ds.Register(oldType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -201,7 +203,7 @@ func TestMigrateFail(t *testing.T) {
 	table.Close()
 
 	i = 0
-	stats := Migrate(MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   oldType{},
 		NewType:   newType{},
@@ -238,7 +240,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	tablePath := path.Join(tmpDir, randomString(12))
-	table, err := Register(exampleType{}, tablePath, nil)
+	table, err := ds.Register(exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -254,7 +256,7 @@ func TestMigrateParams(t *testing.T) {
 	table.Close()
 
 	// Missing table path
-	stats := Migrate(MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams{
 		OldType: exampleType{},
 		NewType: exampleType{},
 		NewPath: tablePath,
@@ -267,7 +269,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing old type
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		NewType:   exampleType{},
 		NewPath:   tablePath,
@@ -280,7 +282,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing new type
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewPath:   tablePath,
@@ -293,7 +295,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// New type is pointer
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		NewType:   &exampleType{},
 		OldType:   exampleType{},
@@ -307,7 +309,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Old type is pointer
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		NewType:   exampleType{},
 		OldType:   &exampleType{},
@@ -321,7 +323,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing new path
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewType:   exampleType{},
@@ -334,7 +336,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing migrate method
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		NewPath:   tablePath,
 		OldType:   exampleType{},
@@ -346,7 +348,7 @@ func TestMigrateParams(t *testing.T) {
 
 	// Backup already exists
 	ioutil.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
-	stats = Migrate(MigrateParams{
+	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewType:   exampleType{},

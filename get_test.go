@@ -1,8 +1,10 @@
-package ds
+package ds_test
 
 import (
 	"path"
 	"testing"
+
+	"github.com/ecnepsnai/ds"
 )
 
 func TestGet(t *testing.T) {
@@ -15,7 +17,7 @@ func TestGet(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -49,7 +51,7 @@ func TestGetIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -87,7 +89,7 @@ func TestGetIndexSortedAscending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -107,7 +109,7 @@ func TestGetIndexSortedAscending(t *testing.T) {
 	}
 
 	// Ascending
-	objects, err := table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: true})
+	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true})
 	if err != nil {
 		t.Errorf("Error getting many objects: %s", err.Error())
 	}
@@ -133,7 +135,7 @@ func TestGetIndexSortedDescending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -153,7 +155,7 @@ func TestGetIndexSortedDescending(t *testing.T) {
 	}
 
 	// Descending
-	objects, err := table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: false})
+	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: false})
 	if err != nil {
 		t.Errorf("Error getting many objects: %s", err.Error())
 	}
@@ -178,7 +180,7 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), &Options{DisableSorting: true})
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), &ds.Options{DisableSorting: true})
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -198,7 +200,7 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 	}
 
 	// Ascending
-	objects, err := table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: true})
+	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true})
 	if err != nil {
 		t.Errorf("Error getting many objects: %s", err.Error())
 	}
@@ -217,7 +219,7 @@ func TestGetUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -250,7 +252,7 @@ func TestGetNilPrimaryKey(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -273,7 +275,7 @@ func TestGetNonindexedField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -296,7 +298,7 @@ func TestGetNonuniqueField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -319,7 +321,7 @@ func TestGetAll(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -357,7 +359,7 @@ func TestGetAllSortedAscending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -377,7 +379,7 @@ func TestGetAllSortedAscending(t *testing.T) {
 	}
 
 	// Ascending
-	objects, err := table.GetAll(&GetOptions{Sorted: true, Ascending: true})
+	objects, err := table.GetAll(&ds.GetOptions{Sorted: true, Ascending: true})
 	if err != nil {
 		t.Errorf("Error getting many objects: %s", err.Error())
 	}
@@ -403,7 +405,7 @@ func TestGetAllSortedDescending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -423,7 +425,7 @@ func TestGetAllSortedDescending(t *testing.T) {
 	}
 
 	// Descending
-	objects, err := table.GetAll(&GetOptions{Sorted: true, Ascending: false})
+	objects, err := table.GetAll(&ds.GetOptions{Sorted: true, Ascending: false})
 	if err != nil {
 		t.Errorf("Error getting many objects: %s", err.Error())
 	}
@@ -447,7 +449,7 @@ func TestGetNoResults(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -476,7 +478,7 @@ func TestGetNoResults(t *testing.T) {
 		t.Error("Object(s) returned when expected nil")
 	}
 
-	objects, err = table.GetAll(&GetOptions{Sorted: true})
+	objects, err = table.GetAll(&ds.GetOptions{Sorted: true})
 	if err != nil {
 		t.Errorf("Unexpected error getting item: %s", err.Error())
 	}
@@ -495,7 +497,7 @@ func TestGetIndexMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -515,7 +517,7 @@ func TestGetIndexMaximum(t *testing.T) {
 	}
 
 	max := 5
-	objects, err := table.GetIndex("Index", index, &GetOptions{Max: max})
+	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -535,7 +537,7 @@ func TestGetIndexMaximum(t *testing.T) {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
-	objects, err = table.GetIndex("Index", index, &GetOptions{Max: max})
+	objects, err = table.GetIndex("Index", index, &ds.GetOptions{Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -556,7 +558,7 @@ func TestGetAllMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -576,7 +578,7 @@ func TestGetAllMaximum(t *testing.T) {
 	}
 
 	max := 5
-	objects, err := table.GetAll(&GetOptions{Max: max})
+	objects, err := table.GetAll(&ds.GetOptions{Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -596,7 +598,7 @@ func TestGetAllMaximum(t *testing.T) {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
-	objects, err = table.GetAll(&GetOptions{Max: max})
+	objects, err = table.GetAll(&ds.GetOptions{Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -617,7 +619,7 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -637,7 +639,7 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 	}
 
 	max := 5
-	objects, err := table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: true, Max: max})
+	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true, Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -657,7 +659,7 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
-	objects, err = table.GetIndex("Index", index, &GetOptions{Sorted: true, Ascending: true, Max: max})
+	objects, err = table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true, Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -678,7 +680,7 @@ func TestGetAllSortedMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -698,7 +700,7 @@ func TestGetAllSortedMaximum(t *testing.T) {
 	}
 
 	max := 5
-	objects, err := table.GetAll(&GetOptions{Sorted: true, Ascending: true, Max: max})
+	objects, err := table.GetAll(&ds.GetOptions{Sorted: true, Ascending: true, Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
@@ -718,7 +720,7 @@ func TestGetAllSortedMaximum(t *testing.T) {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
-	objects, err = table.GetAll(&GetOptions{Sorted: true, Ascending: true, Max: max})
+	objects, err = table.GetAll(&ds.GetOptions{Sorted: true, Ascending: true, Max: max})
 	if err != nil {
 		t.Errorf("Error getting many entires: %s", err.Error())
 	}
