@@ -22,8 +22,8 @@ type MigrateParams struct {
 	// DisableSorting if the current table is sorted, set this to true to disable sorting
 	// Note: This is irreversible!
 	DisableSorting bool
-	// MigrateObject method called for each entry in the table. Return a new type or error.
-	// migration is halted if an error is returned.
+	// MigrateObject method called for each entry in the table in reverse order. Return a new type or error.
+	// Migration is halted if an error is returned.
 	// Return (nil, nil) and the entry will be skipped from migration.
 	MigrateObject func(o interface{}) (interface{}, error)
 }
@@ -43,7 +43,7 @@ type MigrationResults struct {
 // Migrate will migrate a DS table from one object type to another.
 // The migration process appends "_backup" to the current tables filename and
 // does not update it in any way. A new table file is created with the migrated entries
-// and indexes.
+// and indexes. For sorted tables, the original order is preserved.
 func Migrate(params MigrateParams) (results MigrationResults) {
 	log := logtic.Connect("ds-migration")
 
@@ -144,7 +144,9 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		return
 	}
 
-	for i, object := range objects {
+	i := len(objects) - 1
+	for i >= 0 {
+		object := objects[i]
 		newObject, err := params.MigrateObject(object)
 		if err != nil {
 			log.Error("Object migration failed - aborting migration")
@@ -155,6 +157,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		if newObject == nil {
 			log.Debug("Skipping entry at index %d", i)
 			results.EntriesSkipped++
+			i--
 			continue
 		}
 		if err := table.Add(newObject); err != nil {
@@ -165,6 +168,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		}
 		log.Debug("Migrating entry at index %d", i)
 		results.EntriesMigrated++
+		i--
 	}
 
 	log.Info("Migration successful")

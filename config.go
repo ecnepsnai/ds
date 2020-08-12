@@ -14,6 +14,7 @@ type Config struct {
 	Indexes         []string
 	Uniques         []string
 	LastInsertIndex uint64
+	Version         int
 }
 
 func getTableOptions(tablePath string) (*Options, error) {
@@ -80,6 +81,7 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 			Indexes:         table.indexes,
 			Uniques:         table.uniques,
 			LastInsertIndex: 0,
+			Version:         currentDSSchemaVersion,
 		}
 		data, err := gobEncode(config)
 		if err != nil {

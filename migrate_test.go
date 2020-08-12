@@ -361,3 +361,96 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 }
+
+// Test that migrating a table preserves its original order
+func TestMigrateSorted(t *testing.T) {
+	t.Parallel()
+
+	tablePath := path.Join(tmpDir, randomString(12))
+	type originalUser struct {
+		ID     int `ds:"primary"`
+		Value1 string
+	}
+
+	count := 10
+
+	registerTable := func(tt interface{}) *ds.Table {
+		table, err := ds.Register(tt, tablePath, nil)
+		if err != nil {
+			t.Fatalf("Error registering table: %s", err.Error())
+		}
+
+		return table
+	}
+
+	registerAndCloseTable := func() {
+		table := registerTable(originalUser{})
+
+		i := 0
+		for i < count {
+			err := table.Add(originalUser{
+				ID:     i,
+				Value1: randomString(12),
+			})
+			if err != nil {
+				t.Fatalf("Error adding value to table: %s", err.Error())
+			}
+			i++
+		}
+
+		table.Close()
+	}
+
+	registerAndCloseTable()
+
+	type newUser struct {
+		ID     int `ds:"primary"`
+		Value2 string
+	}
+
+	stats := ds.Migrate(ds.MigrateParams{
+		TablePath: tablePath,
+		OldType:   originalUser{},
+		NewType:   newUser{},
+		NewPath:   tablePath,
+		MigrateObject: func(o interface{}) (interface{}, error) {
+			old := o.(originalUser)
+			return newUser{
+				ID:     old.ID,
+				Value2: old.Value1,
+			}, nil
+		},
+	})
+	if stats.Error != nil {
+		t.Errorf("Error migrating table: %s", stats.Error)
+	}
+	if !stats.Success {
+		t.Error("Migration not successful but error is nil")
+	}
+	if stats.EntriesMigrated != uint(count) {
+		t.Errorf("Not all entries migrated. Expected %d got %d", count, stats.EntriesMigrated)
+	}
+
+	table := registerTable(newUser{})
+	defer table.Close()
+
+	objects, err := table.GetAll(&ds.GetOptions{
+		Sorted: true,
+	})
+	if err != nil {
+		t.Errorf("Error getting all objects from table: %s", err.Error())
+	}
+	if len(objects) != count {
+		t.Errorf("Incorrect numebr of objects retruned. Expected %d got %d", count, len(objects))
+	}
+	users := make([]newUser, count)
+	for i, obj := range objects {
+		users[i] = obj.(newUser)
+	}
+
+	for i, user := range users {
+		if user.ID != i {
+			t.Errorf("Incorrect order of users returned. Expected %d got %d", i, user.ID)
+		}
+	}
+}

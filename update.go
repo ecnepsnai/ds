@@ -8,7 +8,8 @@ import (
 )
 
 // Update will update an existing object in the table. The primary key must match for this object
-// otherwise it will just be inserted as a new object.
+// otherwise it will just be inserted as a new object. Updated objects do not change positions in a sorted
+// table.
 func (table *Table) Update(o interface{}) error {
 	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to update pointer from table")
@@ -47,6 +48,7 @@ func (table *Table) Update(o interface{}) error {
 
 		if !table.options.DisableSorting {
 			if index != nil {
+				// Reset the index for the re-added object
 				if err := table.setInsertIndexForObject(tx, o, *index); err != nil {
 					return err
 				}
@@ -56,6 +58,7 @@ func (table *Table) Update(o interface{}) error {
 			if err != nil {
 				return err
 			}
+			// Decrement the last insert index since we've re-used an older index
 			config.LastInsertIndex = config.LastInsertIndex - 1
 			if err := config.update(tx); err != nil {
 				return err

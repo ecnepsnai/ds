@@ -12,6 +12,10 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+// The current version of the DS schema. This is not currently used but is reserved for future
+// use when we may need to change how we store data in tables from older versions of DS.
+var currentDSSchemaVersion = 0
+
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
 // at the specified file path.
 func Register(o interface{}, filePath string, options *Options) (*Table, error) {

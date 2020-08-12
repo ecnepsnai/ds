@@ -1,11 +1,74 @@
 package ds_test
 
 import (
+	"fmt"
 	"path"
 	"testing"
 
 	"github.com/ecnepsnai/ds"
 )
+
+// Test that existing values can be updated in a table
+func TestUpdateExistingValue(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   int
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	count := 5
+
+	i := 0
+	for i < count {
+		object := exampleType{
+			Primary: fmt.Sprintf("%d", i),
+			Index:   i,
+			Unique:  randomString(12),
+		}
+
+		err = table.Add(object)
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		i++
+	}
+
+	i = count - 1
+	for i >= 0 {
+		if err := table.Update(exampleType{
+			Primary: fmt.Sprintf("%d", i),
+			Index:   i,
+			Unique:  randomString(12),
+		}); err != nil {
+			t.Errorf("Error updating existing value: %s", err.Error())
+		}
+		i--
+	}
+
+	objects, err := table.GetAll(&ds.GetOptions{
+		Sorted: true,
+	})
+	if err != nil {
+		t.Errorf("Error getting all values from table: %s", err.Error())
+	}
+	results := make([]exampleType, len(objects))
+	for i, obj := range objects {
+		results[i] = obj.(exampleType)
+	}
+
+	for i, result := range results {
+		if result.Index != i {
+			t.Errorf("Incorrect index of updated object. Expected %d got %d", i, result.Index)
+		}
+	}
+}
 
 // Test that a new entry will still be added with an update
 func TestUpdateNewValue(t *testing.T) {
