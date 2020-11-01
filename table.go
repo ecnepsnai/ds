@@ -24,7 +24,7 @@ type Table struct {
 
 // Close will close the table. This will not panic if the table has not been opened or already been closed.
 func (table *Table) Close() {
-	if table.data != nil {
+	if table != nil && table.data != nil {
 		go tryCloseData(table.data)
 	}
 }
