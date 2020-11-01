@@ -187,3 +187,60 @@ func TestAddDuplicateUnique(t *testing.T) {
 		t.Errorf("No error seen while attempting to insert object with duplicate primary key")
 	}
 }
+
+func TestAddDifferentStruct(t *testing.T) {
+	t.Parallel()
+
+	table, err := ds.Register(struct {
+		Primary string `ds:"primary"`
+	}{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	// Change name of primary
+	if err := table.Add(struct {
+		Foo int `ds:"primary"`
+	}{Foo: 1}); err == nil {
+		t.Errorf("No error seen when adding different struct to table")
+	}
+
+	// Omit primary tag
+	if err := table.Add(struct {
+		Primary string
+	}{Primary: randomString(12)}); err == nil {
+		t.Errorf("No error seen when adding different struct to table")
+	}
+
+	// Change type of primary
+	if err := table.Add(struct {
+		Primary int `ds:"primary"`
+	}{Primary: 1}); err == nil {
+		t.Errorf("No error seen when adding different struct to table")
+	}
+}
+
+func TestAddBadStruct(t *testing.T) {
+	t.Parallel()
+
+	table, err := ds.Register(struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	if err := table.Add(struct {
+		Primary string
+		Index   string
+		Unique  string
+	}{
+		Primary: randomString(12),
+		Index:   randomString(12),
+		Unique:  randomString(12),
+	}); err == nil {
+		t.Errorf("No error seen when adding bad struct to table")
+	}
+}

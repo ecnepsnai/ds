@@ -56,7 +56,7 @@ func TestMigrate(t *testing.T) {
 		Enabled  bool   `ds:"index"`
 		Password string
 	}
-	type user struct {
+	type newUser struct {
 		ID       string `ds:"primary"`
 		Username string `ds:"unique"`
 		Email    string `ds:"unique"`
@@ -67,11 +67,11 @@ func TestMigrate(t *testing.T) {
 	stats := ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   oldUser{},
-		NewType:   user{},
+		NewType:   newUser{},
 		NewPath:   tablePath,
 		MigrateObject: func(o interface{}) (interface{}, error) {
 			old := o.(oldUser)
-			return user{
+			return newUser{
 				ID:       randomString(24),
 				Username: old.Username,
 				Email:    old.Email,
@@ -157,10 +157,10 @@ func TestMigrateSkip(t *testing.T) {
 	}
 	expected := uint(count) / 2
 	if stats.EntriesMigrated != expected {
-		t.Errorf("Unpexpected entry count. Expected %d got %d", count, stats.EntriesMigrated)
+		t.Errorf("Unexpected entry count. Expected %d got %d", count, stats.EntriesMigrated)
 	}
 	if stats.EntriesSkipped != expected {
-		t.Errorf("Unpexpected entry count. Expected %d got %d", count, stats.EntriesSkipped)
+		t.Errorf("Unexpected entry count. Expected %d got %d", count, stats.EntriesSkipped)
 	}
 }
 
@@ -222,7 +222,7 @@ func TestMigrateFail(t *testing.T) {
 		},
 	})
 	if stats.Error == nil {
-		t.Errorf("No error seens for failed migration")
+		t.Errorf("No error seen for failed migration")
 	}
 	if stats.Success {
 		t.Error("Migration successful but migration failed")
@@ -441,7 +441,7 @@ func TestMigrateSorted(t *testing.T) {
 		t.Errorf("Error getting all objects from table: %s", err.Error())
 	}
 	if len(objects) != count {
-		t.Errorf("Incorrect numebr of objects retruned. Expected %d got %d", count, len(objects))
+		t.Errorf("Incorrect number of objects returned. Expected %d got %d", count, len(objects))
 	}
 	users := make([]newUser, count)
 	for i, obj := range objects {

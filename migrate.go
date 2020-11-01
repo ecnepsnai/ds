@@ -9,23 +9,53 @@ import (
 )
 
 // MigrateParams describes the parameters to perform a DS table migration.
-// All fields are required.
+// All fields are required unless otherwise specified.
 type MigrateParams struct {
-	// TablePath the path to the existing table
+	// TablePath the path to the existing table file
 	TablePath string
-	// NewPath the path for the new table. This can be the same as the old table.
+	// NewPath the path for the new table file. This can be the same as the old table.
 	NewPath string
-	// OldType the old type (current type of the table)
+	// OldType an instance of a struct object that has the same definition as the existing table.
 	OldType interface{}
-	// NewType the new type. This can be the same as the OldType.
+	// NewType an instance of a struct object that has the definition that shall be used. This can be the same as the
+	// OldType.
 	NewType interface{}
-	// DisableSorting if the current table is sorted, set this to true to disable sorting
+	// DisableSorting (optional) if the current table is sorted, set this to true to disable sorting
 	// Note: This is irreversible!
 	DisableSorting bool
-	// MigrateObject method called for each entry in the table in reverse order. Return a new type or error.
+	// MigrateObject method called for each entry in the table in reverse order. Return a new type, error, or nil.
 	// Migration is halted if an error is returned.
-	// Return (nil, nil) and the entry will be skipped from migration.
+	// Return (nil, nil) and the entry will be skipped from migration, but migration will continue.
 	MigrateObject func(o interface{}) (interface{}, error)
+	// KeepBackup (optional) if false the backup copy of the table will be discarded if the migration was successful. If true
+	// the copy is not deleted.
+	KeepBackup bool
+}
+
+func (params MigrateParams) validate() error {
+	if _, err := os.Stat(params.TablePath); err != nil {
+		return fmt.Errorf("TablePath does not exist or cannot be accessed: %s", err.Error())
+	}
+	if params.NewPath == "" {
+		return fmt.Errorf("NewPath is required")
+	}
+	if params.OldType == nil {
+		return fmt.Errorf("OldType is required")
+	}
+	if params.NewType == nil {
+		return fmt.Errorf("NewType is required")
+	}
+	if params.MigrateObject == nil {
+		return fmt.Errorf("MigrateObject method required")
+	}
+	if typeOf := reflect.TypeOf(params.NewType); typeOf.Kind() == reflect.Ptr {
+		return fmt.Errorf("NewType cannot be a pointer")
+	}
+	if typeOf := reflect.TypeOf(params.OldType); typeOf.Kind() == reflect.Ptr {
+		return fmt.Errorf("OldType cannot be a pointer")
+	}
+
+	return nil
 }
 
 // MigrationResults describes results from a migration
@@ -40,53 +70,23 @@ type MigrationResults struct {
 	EntriesSkipped uint
 }
 
-// Migrate will migrate a DS table from one object type to another.
-// The migration process appends "_backup" to the current tables filename and
-// does not update it in any way. A new table file is created with the migrated entries
-// and indexes. For sorted tables, the original order is preserved.
+// Migrate will migrate a DS table from one object type to another. You must migrate if the old data type is not
+// compatible with the new type, such as if an existing field was changed. You don't need to migrate if you add or
+// remove an existing field.
+//
+// Before the existing data is touched, a copy is made with "_backup" appended to the filename, and a new table file is
+// created with the migrated entries. Upon successful migration, the backup copy is deleted (by default). If the table
+// being migrated is sorted, the original order is preserved.
+//
+// Ensure you read the documentation of the MigrateParams struct, as it goes into greater detail on the parameters
+// required for migration, and what they do.
 func Migrate(params MigrateParams) (results MigrationResults) {
 	log := logtic.Connect("ds-migration")
 
-	if _, err := os.Stat(params.TablePath); err != nil {
-		log.Error("TablePath does not exist or cannot be accessed: %s", err.Error())
+	if err := params.validate(); err != nil {
+		log.Error("%s", err.Error())
 		results.Success = false
 		results.Error = err
-		return
-	}
-	if params.NewPath == "" {
-		log.Error("NewPath is required")
-		results.Success = false
-		results.Error = fmt.Errorf("newPath required")
-		return
-	}
-	if params.OldType == nil {
-		log.Error("OldType is required")
-		results.Success = false
-		results.Error = fmt.Errorf("oldType required")
-		return
-	}
-	if params.NewType == nil {
-		log.Error("NewType is required")
-		results.Success = false
-		results.Error = fmt.Errorf("newType required")
-		return
-	}
-	if params.MigrateObject == nil {
-		log.Error("MigrateObject method required")
-		results.Success = false
-		results.Error = fmt.Errorf("migrateObject method required")
-		return
-	}
-	if typeOf := reflect.TypeOf(params.NewType); typeOf.Kind() == reflect.Ptr {
-		log.Error("NewType cannot be a pointer")
-		results.Success = false
-		results.Error = fmt.Errorf("newType cannot be a pointer")
-		return
-	}
-	if typeOf := reflect.TypeOf(params.OldType); typeOf.Kind() == reflect.Ptr {
-		log.Error("OldType cannot be a pointer")
-		results.Success = false
-		results.Error = fmt.Errorf("oldType cannot be a pointer")
 		return
 	}
 
@@ -173,5 +173,11 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 
 	log.Info("Migration successful")
 	results.Success = true
+
+	if !params.KeepBackup {
+		os.Remove(backupPath)
+		log.Debug("Removed backup copy '%s'", backupPath)
+	}
+
 	return
 }

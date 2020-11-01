@@ -8,7 +8,7 @@ import (
 
 // Config describes ds table configuration
 type Config struct {
-	Name            string
+	Fields          []Field
 	TypeOf          string
 	PrimaryKey      string
 	Indexes         []string
@@ -65,7 +65,7 @@ func (config *Config) update(tx *bbolt.Tx) error {
 	return bucket.Put(configKey, data)
 }
 
-func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
+func (table *Table) initializeConfig(tx *bbolt.Tx, force bool) error {
 	configBucket, err := tx.CreateBucketIfNotExists(configKey)
 	if err != nil {
 		table.log.Error("Error creating config bucket: %s", err.Error())
@@ -75,7 +75,7 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 	if configData == nil {
 		// New Table
 		config := Config{
-			Name:            table.Name,
+			Fields:          table.getFields(),
 			TypeOf:          table.typeOf.Name(),
 			PrimaryKey:      table.primaryKey,
 			Indexes:         table.indexes,
@@ -96,9 +96,13 @@ func (table *Table) initalizeConfig(tx *bbolt.Tx, force bool) error {
 		if err != nil {
 			return err
 		}
-		if !force && config.TypeOf != table.typeOf.Name() {
-			table.log.Error("Cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
-			return fmt.Errorf("cannot register type '%s' for existing table for type '%s'", table.typeOf.Name(), config.TypeOf)
+		if err := compareFields(table.getFields(), config.Fields); err != nil {
+			table.log.Error("%s", err.Error())
+			return err
+		}
+		if config.Version > currentDSSchemaVersion {
+			table.log.Error("Unable to register existing table %s as it's from a newer version of DS. %d > %d", table.Name, config.Version, currentDSSchemaVersion)
+			return fmt.Errorf("table is from newer version of ds")
 		}
 		table.log.Debug("TypeOf matches")
 		if !force && config.PrimaryKey != table.primaryKey {

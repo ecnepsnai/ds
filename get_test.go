@@ -482,8 +482,8 @@ func TestGetNoResults(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error getting item: %s", err.Error())
 	}
-	if object != nil {
-		t.Error("Object(s) returned when expected nil")
+	if len(objects) > 0 {
+		t.Errorf("Object(s) returned when expected nil: %+v", objects)
 	}
 }
 

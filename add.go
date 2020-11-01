@@ -17,9 +17,10 @@ func (table *Table) Add(o interface{}) error {
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
 		return fmt.Errorf("refusing to add a pointer to the table")
-	} else if table.typeOf.Name() != typeOf.Name() {
-		table.log.Error("Cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
-		return fmt.Errorf("cannot add type '%s' to table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
+	}
+	if err := compareFields(table.getFields(), structFieldsToFields(allFields(typeOf))); err != nil {
+		table.log.Error("Incompatible object definition: %s", err.Error())
+		return err
 	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
@@ -32,21 +33,7 @@ func (table *Table) Add(o interface{}) error {
 	return nil
 }
 
-func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
-	valueOf := reflect.Indirect(reflect.ValueOf(o))
-	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
-	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
-	if err != nil {
-		table.log.Error("Cannot encode primary key value: %s", err.Error())
-		return err
-	}
-
-	dataBucket := tx.Bucket(dataKey)
-	if data := dataBucket.Get(primaryKeyBytes); data != nil {
-		table.log.Error("Duplicate primary key")
-		return fmt.Errorf("duplicate primary key")
-	}
-
+func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryKeyBytes []byte) error {
 	for _, index := range table.indexes {
 		indexValue := valueOf.FieldByName(index)
 		indexValueBytes, err := gobEncode(indexValue.Interface())
@@ -82,6 +69,11 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primaryKeyBytes []byte) error {
 	for _, unique := range table.uniques {
 		uniqueValue := valueOf.FieldByName(unique)
 		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
@@ -103,6 +95,32 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
+	valueOf := reflect.Indirect(reflect.ValueOf(o))
+	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
+	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
+	if err != nil {
+		table.log.Error("Cannot encode primary key value: %s", err.Error())
+		return err
+	}
+
+	dataBucket := tx.Bucket(dataKey)
+	if data := dataBucket.Get(primaryKeyBytes); data != nil {
+		table.log.Error("Duplicate primary key")
+		return fmt.Errorf("duplicate primary key")
+	}
+
+	if err := table.addUpdateIndex(tx, valueOf, primaryKeyBytes); err != nil {
+		return err
+	}
+	if err := table.addUpdateUnique(tx, valueOf, primaryKeyBytes); err != nil {
+		return err
+	}
+
 	if !table.options.DisableSorting {
 		config, err := table.getConfig(tx)
 		if err != nil {

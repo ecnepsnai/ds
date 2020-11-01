@@ -1,6 +1,8 @@
 package ds_test
 
 import (
+	"bytes"
+	"encoding/gob"
 	"os"
 	"path"
 	"testing"
@@ -334,4 +336,111 @@ func TestRegisterChangePrimaryKey(t *testing.T) {
 	if err == nil {
 		t.Errorf("No error seen when one expected while changing the tables primary key")
 	}
+}
+
+func TestRegisterChangeField(t *testing.T) {
+	t.Parallel()
+
+	tablePath := path.Join(tmpDir, randomString(12))
+
+	// Register first table
+	table, err := ds.Register(struct {
+		Primary string `ds:"primary"`
+	}{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+	table.Close()
+
+	// Change the type of Primary to an int
+	table, err = ds.Register(struct {
+		Primary int `ds:"primary"`
+	}{}, tablePath, nil)
+	if err == nil {
+		t.Errorf("No error seen when one expected while changing a field type")
+	}
+}
+
+func TestRegisterChangeTag(t *testing.T) {
+	t.Parallel()
+
+	tablePath := path.Join(tmpDir, randomString(12))
+
+	// Register first table
+	table, err := ds.Register(struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+	}{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+	table.Close()
+
+	// Change the type of Primary to an int
+	table, err = ds.Register(struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"unique"`
+	}{}, tablePath, nil)
+	if err == nil {
+		t.Errorf("No error seen when one expected while changing a field tag")
+	}
+}
+
+func TestRegisterOldVersion(t *testing.T) {
+	tablePath := path.Join(tmpDir, randomString(12))
+
+	data, err := bbolt.Open(tablePath, os.ModePerm, nil)
+	if err != nil {
+		t.Fatalf("Error opening bolt database: %s", err.Error())
+	}
+
+	err = data.Update(func(tx *bbolt.Tx) error {
+		configBucket, err := tx.CreateBucketIfNotExists([]byte("config"))
+		if err != nil {
+			t.Fatalf("Error creating config bucket: %s", err.Error())
+		}
+
+		config := ds.Config{
+			Fields: []ds.Field{
+				{
+					Name: "Primary",
+					Tag:  "primary",
+					Type: "string",
+				},
+				{
+					Name: "Index",
+					Tag:  "index",
+					Type: "string",
+				},
+			},
+			TypeOf:          "",
+			PrimaryKey:      "Primary",
+			Indexes:         []string{"Index"},
+			Uniques:         []string{},
+			LastInsertIndex: 0x0,
+			Version:         65535,
+		}
+
+		var buf bytes.Buffer
+		if err := gob.NewEncoder(&buf).Encode(config); err != nil {
+			t.Fatalf("Error encoding config object: %s", err.Error())
+		}
+		if err := configBucket.Put([]byte("config"), buf.Bytes()); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Error updating table: %s", err.Error())
+	}
+	data.Close()
+
+	table, err := ds.Register(struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+	}{}, tablePath, nil)
+	if err == nil {
+		t.Errorf("No error seen when trying to open table from newer version of DS")
+	}
+	table.Close()
 }

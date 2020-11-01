@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
 	"sync"
 
 	"github.com/ecnepsnai/logtic"
@@ -14,7 +13,7 @@ import (
 
 // The current version of the DS schema. This is not currently used but is reserved for future
 // use when we may need to change how we store data in tables from older versions of DS.
-var currentDSSchemaVersion = 0
+var currentDSSchemaVersion = 1
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
 // at the specified file path.
@@ -22,9 +21,6 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		return nil, fmt.Errorf("refusing to register table to a pointer")
-	}
-	if typeOf.Kind() == reflect.Struct && typeOf.Name() == "" {
-		fmt.Fprintf(os.Stderr, "WARNING: registering a table to an anonmymous struct is unsupported\n")
 	}
 
 	// Gob will panic if you register the same object twice.
@@ -44,49 +40,9 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 		table.options = *options
 	}
 
-	var primaryKey string
-	var indexes []string
-	var uniques []string
-
-	numFields := typeOf.NumField()
-	if numFields == 0 {
-		return nil, fmt.Errorf("type '%s' has no fields", typeOf.Name())
-	}
-	i := 0
-	for i < numFields {
-		field := typeOf.Field(i)
-		tag := field.Tag.Get("ds")
-		if len(tag) == 0 {
-			i++
-			continue
-		}
-		table.log.Debug("Field: %s, tag: %s", field.Name, tag)
-
-		if strings.Contains(tag, "primary") {
-			if len(primaryKey) > 0 {
-				table.log.Error("Cannot specify multiple primary keys")
-				return nil, fmt.Errorf("cannot specify multiple primary keys")
-			}
-
-			table.log.Debug("Primary key field '%s'", field.Name)
-			primaryKey = field.Name
-		} else if strings.Contains(tag, "index") {
-			table.log.Debug("Adding indexed field '%s'", field.Name)
-			indexes = append(indexes, field.Name)
-		} else if strings.Contains(tag, "unique") {
-			table.log.Debug("Adding unique field '%s'", field.Name)
-			uniques = append(uniques, field.Name)
-		} else {
-			table.log.Error("Unknown struct tag '%s' on field '%s'", tag, field.Name)
-			return nil, fmt.Errorf("unknown struct tag '%s' on field '%s'", tag, field.Name)
-		}
-
-		i++
-	}
-
-	if len(primaryKey) <= 0 {
-		table.log.Error("A primary key is required")
-		return nil, fmt.Errorf("a primary key is required")
+	primaryKey, indexes, uniques, err := table.getKeysFromFields()
+	if err != nil {
+		return nil, err
 	}
 
 	table.primaryKey = primaryKey
@@ -98,46 +54,50 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 		return nil, fmt.Errorf("bad table file")
 	}
 
-	data, err := bbolt.Open(filePath, os.ModePerm, nil)
-	if err != nil {
-		table.log.Error("Error opening bolt database: %s", err.Error())
-		return nil, err
-	}
-	table.data = data
-
 	force := false
 	if options != nil {
 		force = options.force
 	}
+	if err := table.createTableBuckets(filePath, force); err != nil {
+		return nil, err
+	}
+
+	table.log.Info("Datastore '%s' opened at '%s'", table.Name, filePath)
+	return &table, nil
+}
+
+func (table *Table) createTableBuckets(filePath string, force bool) error {
+	data, err := bbolt.Open(filePath, os.ModePerm, nil)
+	if err != nil {
+		table.log.Error("Error opening bolt database: %s", err.Error())
+		return err
+	}
+	table.data = data
 
 	err = data.Update(func(tx *bbolt.Tx) error {
-		if err := table.initalizeConfig(tx, force); err != nil {
+		if err := table.initializeConfig(tx, force); err != nil {
 			table.log.Error("Error initializing config: %s", err.Error())
 			return err
 		}
 
-		_, err = tx.CreateBucketIfNotExists(dataKey)
-		if err != nil {
+		if _, err = tx.CreateBucketIfNotExists(dataKey); err != nil {
 			table.log.Error("Error creating bucket '%s: %s", "data", err.Error())
 			return err
 		}
 		if !table.options.DisableSorting {
-			_, err = tx.CreateBucketIfNotExists(insertOrderKey)
-			if err != nil {
+			if _, err = tx.CreateBucketIfNotExists(insertOrderKey); err != nil {
 				table.log.Error("Error creating bucket '%s: %s", insertOrderKey, err.Error())
 				return err
 			}
 		}
-		for _, index := range indexes {
-			_, err = tx.CreateBucketIfNotExists([]byte(indexPrefix + index))
-			if err != nil {
+		for _, index := range table.indexes {
+			if _, err = tx.CreateBucketIfNotExists([]byte(indexPrefix + index)); err != nil {
 				table.log.Error("Error creating bucket '%s: %s", indexPrefix+index, err.Error())
 				return err
 			}
 		}
-		for _, unique := range uniques {
-			_, err = tx.CreateBucketIfNotExists([]byte(uniquePrefix + unique))
-			if err != nil {
+		for _, unique := range table.uniques {
+			if _, err = tx.CreateBucketIfNotExists([]byte(uniquePrefix + unique)); err != nil {
 				table.log.Error("Error creating bucket '%s: %s", uniquePrefix+unique, err.Error())
 				return err
 			}
@@ -148,12 +108,10 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	if err != nil {
 		table.log.Error("Error preparing bolt database: %s", err.Error())
 		data.Close()
-		return nil, err
+		return err
 	}
 
-	table.log.Info("Datastore '%s' opened at '%s'", table.Name, filePath)
-
-	return &table, nil
+	return nil
 }
 
 func checkForExistingBoltTable(filePath string) error {

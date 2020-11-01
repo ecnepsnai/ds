@@ -13,17 +13,17 @@ import (
 )
 
 type results struct {
-	EntryCount      int      `json:"entry_count"`
-	IndexCount      int      `json:"index_count"`
-	UniqueCount     int      `json:"unique_count"`
-	Name            string   `json:"name"`
-	TypeOf          string   `json:"type_of"`
-	PrimaryKey      string   `json:"primary_key"`
-	IndexedFields   []string `json:"indexed_fields"`
-	UniqueFields    []string `json:"unique_fields"`
-	LastInsertIndex uint64   `json:"last_insert_index"`
-	Options         []string `json:"options"`
-	Size            int64    `json:"size"`
+	EntryCount      int        `json:"entry_count"`
+	IndexCount      int        `json:"index_count"`
+	UniqueCount     int        `json:"unique_count"`
+	Fields          []ds.Field `json:"fields"`
+	TypeOf          string     `json:"type_of"`
+	PrimaryKey      string     `json:"primary_key"`
+	IndexedFields   []string   `json:"indexed_fields"`
+	UniqueFields    []string   `json:"unique_fields"`
+	LastInsertIndex uint64     `json:"last_insert_index"`
+	Options         []string   `json:"options"`
+	Size            int64      `json:"size"`
 }
 
 func main() {
@@ -84,7 +84,7 @@ func main() {
 	fmt.Printf("Total entries: %d\n", r.EntryCount)
 	fmt.Printf("Total indexes: %d\n", r.IndexCount)
 	fmt.Printf("Total unique indexes: %d\n", r.UniqueCount)
-	fmt.Printf("Name: %s\n", r.Name)
+	fmt.Printf("Name: %+v\n", r.Fields)
 	fmt.Printf("Type: %s\n", r.TypeOf)
 	fmt.Printf("Primary key field: %s\n", r.PrimaryKey)
 	fmt.Printf("Indexed fields: %s\n", r.IndexedFields)
@@ -183,7 +183,7 @@ func run(tx *bbolt.Tx) (r results) {
 		os.Exit(2)
 	}
 
-	r.Name = config.Name
+	r.Fields = config.Fields
 	r.TypeOf = config.TypeOf
 	r.PrimaryKey = config.PrimaryKey
 	r.IndexedFields = config.Indexes
