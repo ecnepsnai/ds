@@ -5,8 +5,10 @@
 [![Releases](https://img.shields.io/github/release/ecnepsnai/ds/all.svg?style=flat-square)](https://github.com/ecnepsnai/ds/releases)
 [![LICENSE](https://img.shields.io/github/license/ecnepsnai/ds.svg?style=flat-square)](https://github.com/ecnepsnai/ds/blob/master/LICENSE)
 
-Package ds (short for "data store") is a key-value store with hash indexes. It allows for rudementary but lightning fast
-retrevial of grouped or relevant data without having to iterate over all objects in the store.
+Package ds (short for "data store") is a key-value store with hash indexes. It allows for rudimentary but lightning fast
+retrieval of grouped or relevant data without having to iterate over all objects in the store.
+
+Define the primary key, indexed keys, and unique keys as tags on struct fields, and DS takes care of the rest.
 
 # Usage & Examples
 

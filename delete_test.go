@@ -80,6 +80,48 @@ func TestDeleteIndex(t *testing.T) {
 	}
 }
 
+// Test that  nothing happens when deleting by index that doesn't match
+func TestDeleteIndexMissing(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	index := randomString(12)
+	i := 0
+	for i < 10 {
+		err = table.Add(exampleType{
+			Primary: randomString(12),
+			Index:   index,
+			Unique:  randomString(12),
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		i++
+	}
+
+	if err := table.DeleteAllIndex("Index", randomString(12)); err != nil {
+		t.Errorf("Error removing value from table: %s", err.Error())
+	}
+
+	objects, err := table.GetIndex("Index", index, nil)
+	if err != nil {
+		t.Errorf("Error getting objects by index: %s", err.Error())
+	}
+	if len(objects) != 10 {
+		t.Errorf("Unexpected number of objects returned. Expected 10 got %d", len(objects))
+	}
+}
+
 // Test that deleting an object that is not in the table does not cause an error
 func TestDeleteNotSaved(t *testing.T) {
 	t.Parallel()
@@ -197,6 +239,26 @@ func TestDeletePrimaryKey(t *testing.T) {
 	}
 }
 
+// Test that nothing happens when deleting an object with a primary key that doesn't match anything
+func TestDeletePrimaryKeyMissing(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	if err := table.DeletePrimaryKey(randomString(12)); err != nil {
+		t.Errorf("Error removing value from table: %s", err.Error())
+	}
+}
+
 // Test that you can delete an object by any unique field's value
 func TestDeleteUnique(t *testing.T) {
 	t.Parallel()
@@ -233,6 +295,26 @@ func TestDeleteUnique(t *testing.T) {
 	}
 	if ret != nil {
 		t.Error("Unexpected data returned for deleted object")
+	}
+}
+
+// Test that nothing happens when deleting an object with a unique value that doesn't match anything
+func TestDeleteUniqueMissing(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	if err := table.DeleteUnique("Unique", randomString(12)); err != nil {
+		t.Errorf("Error removing value from table: %s", err.Error())
 	}
 }
 

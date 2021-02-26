@@ -1,3 +1,7 @@
+# v1.4.1
+
+- Fix a panic when calling `table.DeletePrimaryKey` or `table.DeleteUnique` with values that do not match any entries
+
 # v1.4.0
 
 **This Release Contains Storage Schema Changes**

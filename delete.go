@@ -34,20 +34,28 @@ func (table *Table) Delete(o interface{}) error {
 	return nil
 }
 
-// DeletePrimaryKey will delete the object with the associated primary key and clean indexes
+// DeletePrimaryKey will delete the object with the associated primary key and clean indexes. Does nothing if not object
+// matches the given primary key.
 func (table *Table) DeletePrimaryKey(o interface{}) error {
 	object, err := table.Get(o)
 	if err != nil {
 		return err
 	}
+	if object == nil {
+		return nil
+	}
 	return table.Delete(object)
 }
 
-// DeleteUnique will delete the object with the associated unique value and clean indexes
+// DeleteUnique will delete the object with the associated unique value and clean indexes. Does nothing if no object
+// matched the given unique fields value.
 func (table *Table) DeleteUnique(field string, o interface{}) error {
 	object, err := table.GetUnique(field, o)
 	if err != nil {
 		return err
+	}
+	if object == nil {
+		return nil
 	}
 	return table.Delete(object)
 }
