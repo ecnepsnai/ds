@@ -2,7 +2,6 @@ package ds_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -347,7 +346,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Backup already exists
-	ioutil.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
+	os.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
 	stats = ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   exampleType{},

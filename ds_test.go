@@ -3,7 +3,6 @@ package ds_test
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -24,7 +23,7 @@ func isTestVerbose() bool {
 }
 
 func testSetup() {
-	tmp, err := ioutil.TempDir("", "certbox")
+	tmp, err := os.MkdirTemp("", "certbox")
 	if err != nil {
 		panic(err)
 	}

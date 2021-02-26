@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	mrand "math/rand"
 	"os"
 	"path"
@@ -35,7 +34,7 @@ type nestType struct {
 }
 
 func main() {
-	tmp, err := ioutil.TempDir("", "ds")
+	tmp, err := os.MkdirTemp("", "ds")
 	if err != nil {
 		panic(err)
 	}

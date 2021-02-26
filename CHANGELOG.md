@@ -1,3 +1,7 @@
+# v1.5.0
+
+- Internal changes to support Go 1.16
+
 # v1.4.1
 
 - Fix a panic when calling `table.DeletePrimaryKey` or `table.DeleteUnique` with values that do not match any entries
