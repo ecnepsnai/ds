@@ -78,7 +78,11 @@ func TestRegisterNoExportedFields(t *testing.T) {
 		unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err != nil {
+	if _, err := ds.Register(exampleType{
+		primary: randomString(6),
+		index:   randomString(6),
+		unique:  randomString(6),
+	}, path.Join(tmpDir, randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -330,7 +334,7 @@ func TestRegisterChangePrimaryKey(t *testing.T) {
 	table.Close()
 
 	// Try to change the primary key
-	table, err = ds.Register(struct {
+	_, err = ds.Register(struct {
 		Secondary string `ds:"primary"`
 	}{}, tablePath, nil)
 	if err == nil {
@@ -353,7 +357,7 @@ func TestRegisterChangeField(t *testing.T) {
 	table.Close()
 
 	// Change the type of Primary to an int
-	table, err = ds.Register(struct {
+	_, err = ds.Register(struct {
 		Primary int `ds:"primary"`
 	}{}, tablePath, nil)
 	if err == nil {
@@ -377,7 +381,7 @@ func TestRegisterChangeTag(t *testing.T) {
 	table.Close()
 
 	// Change the type of Primary to an int
-	table, err = ds.Register(struct {
+	_, err = ds.Register(struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"unique"`
 	}{}, tablePath, nil)

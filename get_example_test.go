@@ -72,6 +72,7 @@ func ExampleTable_GetAll() {
 	}
 	if objects == nil {
 		// No objects were returned
+		return
 	}
 
 	users := make([]User, len(objects))
@@ -99,6 +100,7 @@ func ExampleTable_GetIndex() {
 	}
 	if objects == nil {
 		// No objects were returned
+		return
 	}
 
 	users := make([]User, len(objects))

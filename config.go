@@ -35,7 +35,7 @@ func getTableOptions(tablePath string) (*Options, error) {
 		return nil, err
 	}
 
-	if optionsData == nil || len(optionsData) == 0 {
+	if len(optionsData) == 0 {
 		return nil, nil
 	}
 

@@ -3,12 +3,16 @@ package ds_test
 import "github.com/ecnepsnai/ds"
 
 func ExampleTable_IsIndexed() {
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
-
 	type User struct {
 		Username string `ds:"primary"`
 		Email    string `ds:"email"`
 		Enabled  bool   `ds:"index"`
+	}
+
+	tablePath := "user.db"
+	table, err := ds.Register(User{}, tablePath, nil)
+	if err != nil {
+		panic(err)
 	}
 
 	table.IsIndexed("Username") // returns False
@@ -16,12 +20,16 @@ func ExampleTable_IsIndexed() {
 }
 
 func ExampleTable_IsUnique() {
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
-
 	type User struct {
 		Username string `ds:"primary"`
 		Email    string `ds:"email"`
 		Enabled  bool   `ds:"index"`
+	}
+
+	tablePath := "user.db"
+	table, err := ds.Register(User{}, tablePath, nil)
+	if err != nil {
+		panic(err)
 	}
 
 	table.IsUnique("Username") // returns False

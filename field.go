@@ -92,16 +92,16 @@ func compareFields(oldFields, newFields []Field) error {
 			}
 
 			if newField.Type != oldField.Type {
-				return fmt.Errorf("Cannot change type of field '%s' without migration", newField.Name)
+				return fmt.Errorf("cannot change type of field '%s' without migration", newField.Name)
 			}
 			if newField.Tag != oldField.Tag {
-				return fmt.Errorf("Cannot change tag of field '%s' without migration", newField.Name)
+				return fmt.Errorf("cannot change tag of field '%s' without migration", newField.Name)
 			}
 		}
 	}
 
 	if newPrimary.Name != oldPrimary.Name {
-		return fmt.Errorf("Cannot change name of primary field '%s'", oldPrimary.Name)
+		return fmt.Errorf("cannot change name of primary field '%s'", oldPrimary.Name)
 	}
 
 	return nil
