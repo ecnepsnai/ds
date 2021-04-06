@@ -1,3 +1,7 @@
+# v1.5.1
+
+- Fixed a number of issues identified by static analysis
+
 # v1.5.0
 
 - Internal changes to support Go 1.16
