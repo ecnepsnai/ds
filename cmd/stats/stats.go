@@ -15,7 +15,9 @@ import (
 type results struct {
 	EntryCount      int        `json:"entry_count"`
 	IndexCount      int        `json:"index_count"`
+	UnmatchedIndex  int        `json:"unmatched_index"`
 	UniqueCount     int        `json:"unique_count"`
+	UnmatchedUnique int        `json:"unmatched_unique"`
 	Fields          []ds.Field `json:"fields"`
 	TypeOf          string     `json:"type_of"`
 	PrimaryKey      string     `json:"primary_key"`
@@ -83,7 +85,9 @@ func main() {
 	}
 	fmt.Printf("Total entries: %d\n", r.EntryCount)
 	fmt.Printf("Total indexes: %d\n", r.IndexCount)
-	fmt.Printf("Total unique indexes: %d\n", r.UniqueCount)
+	fmt.Printf("Unmatched index values: %d\n", r.UnmatchedIndex)
+	fmt.Printf("Total unique values: %d\n", r.UniqueCount)
+	fmt.Printf("Unmatched unique values: %d\n", r.UnmatchedUnique)
 	fmt.Printf("Name: %+v\n", r.Fields)
 	fmt.Printf("Type: %s\n", r.TypeOf)
 	fmt.Printf("Primary key field: %s\n", r.PrimaryKey)
@@ -151,22 +155,46 @@ func run(tx *bbolt.Tx) (r results) {
 	r.EntryCount = entryCount
 
 	indexCount := 0
+	unmatchedIndexCount := 0
 	for _, bucket := range indexBuckets {
-		bucket.Bucket.ForEach(func(k []byte, v []byte) error {
+		err := bucket.Bucket.ForEach(func(k []byte, v []byte) error {
 			indexCount++
+			keys, err := gobDecodePrimaryKeyList(v)
+			if err != nil {
+				return err
+			}
+			for _, pk := range keys {
+				if tx.Bucket([]byte("data")).Get(pk) == nil {
+					unmatchedIndexCount++
+				}
+			}
 			return nil
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error iterating over table indexes: %s", err.Error())
+			os.Exit(1)
+		}
 	}
 	r.IndexCount = indexCount
+	r.UnmatchedIndex = unmatchedIndexCount
 
 	uniqueCount := 0
+	unmatchedUniqueCount := 0
 	for _, bucket := range uniqueBuckets {
-		bucket.Bucket.ForEach(func(k []byte, v []byte) error {
+		err := bucket.Bucket.ForEach(func(k []byte, v []byte) error {
 			uniqueCount++
+			if tx.Bucket([]byte("data")).Get(v) == nil {
+				unmatchedUniqueCount++
+			}
 			return nil
 		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error iterating over table uniques: %s", err.Error())
+			os.Exit(1)
+		}
 	}
 	r.UniqueCount = uniqueCount
+	r.UnmatchedUnique = unmatchedUniqueCount
 
 	gob.Register(ds.Config{})
 	data := configBucket.Bucket.Get([]byte("config"))

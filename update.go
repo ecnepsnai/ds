@@ -49,7 +49,7 @@ func (table *Table) Update(o interface{}) error {
 		if !table.options.DisableSorting {
 			if index != nil {
 				// Reset the index for the re-added object
-				if err := table.setInsertIndexForObject(tx, o, *index); err != nil {
+				if err := table.setInsertIndexForObject(tx, reflect.Indirect(reflect.ValueOf(o)), *index); err != nil {
 					return err
 				}
 			}

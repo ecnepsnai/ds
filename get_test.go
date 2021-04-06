@@ -1,10 +1,12 @@
 package ds_test
 
 import (
+	"os"
 	"path"
 	"testing"
 
 	"github.com/ecnepsnai/ds"
+	"go.etcd.io/bbolt"
 )
 
 func TestGet(t *testing.T) {
@@ -76,6 +78,66 @@ func TestGetIndex(t *testing.T) {
 	}
 	if len(objects) != count {
 		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+	}
+}
+
+// Test that if there are unmatched index values they aren't returned
+func TestGetUnmatchedIndex(t *testing.T) {
+	t.Parallel()
+
+	index := randomString(12)
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Index   string `ds:"index"`
+		Unique  string `ds:"unique"`
+	}
+
+	tablePath := path.Join(tmpDir, randomString(12))
+	table, err := ds.Register(exampleType{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	// Add data to the table
+	i := 0
+	count := 10
+	for i < count {
+		err = table.Add(exampleType{
+			Primary: randomString(12),
+			Index:   index,
+			Unique:  randomString(12),
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		i++
+	}
+	table.Close()
+
+	// Delete just the data buckets - leaving everything else
+	db, err := bbolt.Open(tablePath, os.ModePerm, nil)
+	if err != nil {
+		t.Fatalf("Error opening bolt table: %s", err.Error())
+	}
+	db.Update(func(tx *bbolt.Tx) error {
+		tx.DeleteBucket([]byte("data"))
+		tx.CreateBucketIfNotExists([]byte("data"))
+		return nil
+	})
+	db.Close()
+
+	table, err = ds.Register(exampleType{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	// This should return nothing
+	objects, err := table.GetIndex("Index", index, nil)
+	if err != nil {
+		t.Errorf("Error getting many objects: %s", err.Error())
+	}
+	if len(objects) > 0 {
+		t.Errorf("Unexpected object count returned. Expected 0 got %d", len(objects))
 	}
 }
 
@@ -237,9 +299,62 @@ func TestGetUnique(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error getting object: %s", err.Error())
 	}
+	if v == nil {
+		t.Fatalf("No data returned when expected")
+	}
 	got := v.(exampleType).Unique
 	if got != unique {
 		t.Errorf("Incorrect unique value returned. Expected '%s' got '%s", unique, got)
+	}
+}
+
+func TestGetUnmatchedUnique(t *testing.T) {
+	t.Parallel()
+
+	unique := randomString(12)
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Unique  string `ds:"unique"`
+	}
+
+	tablePath := path.Join(tmpDir, randomString(12))
+	table, err := ds.Register(exampleType{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Unique:  unique,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+	table.Close()
+
+	// Delete just the data buckets - leaving everything else
+	db, err := bbolt.Open(tablePath, os.ModePerm, nil)
+	if err != nil {
+		t.Fatalf("Error opening bolt table: %s", err.Error())
+	}
+	db.Update(func(tx *bbolt.Tx) error {
+		tx.DeleteBucket([]byte("data"))
+		tx.CreateBucketIfNotExists([]byte("data"))
+		return nil
+	})
+	db.Close()
+
+	table, err = ds.Register(exampleType{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	v, err := table.GetUnique("Unique", unique)
+	if err != nil {
+		t.Errorf("Error getting object: %s", err.Error())
+	}
+	if v != nil {
+		t.Errorf("Unexpected data returned when none expected")
 	}
 }
 

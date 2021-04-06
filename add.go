@@ -24,6 +24,7 @@ func (table *Table) Add(o interface{}) error {
 	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
+		table.log.Debug("Adding value to table")
 		return table.add(tx, o)
 	})
 	if err != nil {
@@ -86,8 +87,18 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 
 		uniqueBucket := tx.Bucket([]byte(uniquePrefix + unique))
 		if data := uniqueBucket.Get(uniqueValueBytes); data != nil {
-			table.log.Error("Non-unique value for unique field '%s'", unique)
-			return fmt.Errorf("non-unique value for unique field '%s'", unique)
+			// Check that if there is a duplicate unique value that it actually maps to data.
+			// If it doesn't, delete the unmatched value
+			if tx.Bucket(dataKey).Get(data) != nil {
+				table.log.Error("Non-unique value for unique field '%s'", unique)
+				return fmt.Errorf("non-unique value for unique field '%s'", unique)
+			} else {
+				if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
+					table.log.Error("Failed to correct unmatched unique value for field '%s': %s", unique, err.Error())
+					return err
+				}
+				table.log.Warn("Corrected unmatched duplicate unique value for field '%s'", unique)
+			}
 		}
 		table.log.Debug("Updating unique '%s'", unique)
 		if err := uniqueBucket.Put(uniqueValueBytes, primaryKeyBytes); err != nil {
@@ -105,6 +116,11 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
 	if err != nil {
 		table.log.Error("Cannot encode primary key value: %s", err.Error())
+		return err
+	}
+	data, err := gobEncode(o)
+	if err != nil {
+		table.log.Error("Error encoding object: %s", err.Error())
 		return err
 	}
 
@@ -128,7 +144,7 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 		}
 
 		index := config.LastInsertIndex + 1
-		if err := table.setInsertIndexForObject(tx, o, index); err != nil {
+		if err := table.setInsertIndexForObject(tx, valueOf, index); err != nil {
 			table.log.Error("Error updating insert index for entry: %s", err.Error())
 			return err
 		}
@@ -139,11 +155,6 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 		}
 	}
 
-	data, err := gobEncode(o)
-	if err != nil {
-		table.log.Error("Error encoding object: %s", err.Error())
-		return err
-	}
 	if err := dataBucket.Put(primaryKeyBytes, data); err != nil {
 		table.log.Error("Error inserting new object: %s", err.Error())
 		return err
@@ -152,8 +163,8 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 	return nil
 }
 
-func (table *Table) setInsertIndexForObject(tx *bbolt.Tx, object interface{}, index uint64) error {
-	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
+func (table *Table) setInsertIndexForObject(tx *bbolt.Tx, object reflect.Value, index uint64) error {
+	pk := object.FieldByName(table.primaryKey).Interface()
 	primaryKey, err := gobEncode(pk)
 	if err != nil {
 		return err

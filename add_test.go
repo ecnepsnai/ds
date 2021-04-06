@@ -1,10 +1,12 @@
 package ds_test
 
 import (
+	"os"
 	"path"
 	"testing"
 
 	"github.com/ecnepsnai/ds"
+	"go.etcd.io/bbolt"
 )
 
 // Test that you can add a row to the table
@@ -185,6 +187,58 @@ func TestAddDuplicateUnique(t *testing.T) {
 	})
 	if err == nil {
 		t.Errorf("No error seen while attempting to insert object with duplicate primary key")
+	}
+}
+
+// Test that you can add an object into a table that has an unmatched unique field
+func TestAddUnmatchedUnique(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Unique  string `ds:"unique"`
+	}
+
+	unique := randomString(12)
+
+	tablePath := path.Join(tmpDir, randomString(12))
+	table, err := ds.Register(exampleType{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Unique:  unique,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
+	}
+
+	table.Close()
+
+	db, err := bbolt.Open(tablePath, os.ModePerm, nil)
+	if err != nil {
+		t.Fatalf("Error opening bolt table: %s", err.Error())
+	}
+	db.Update(func(tx *bbolt.Tx) error {
+		tx.DeleteBucket([]byte("data"))
+		tx.CreateBucketIfNotExists([]byte("data"))
+		return nil
+	})
+	db.Close()
+
+	table, err = ds.Register(exampleType{}, tablePath, nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	err = table.Add(exampleType{
+		Primary: randomString(12),
+		Unique:  unique,
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 }
 

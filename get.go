@@ -109,6 +109,19 @@ func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOp
 	}
 
 	table.log.Debug("Keys matching Index(%s) == %x: %d", fieldName, indexValueBytes, len(keys))
+	table.data.View(func(tx *bbolt.Tx) error {
+		dataBucket := tx.Bucket(dataKey)
+		i := len(keys) - 1
+		for i >= 0 {
+			pk := keys[i]
+			if dataBucket.Get(pk) == nil {
+				table.log.Warn("Removing unmatched index value for field '%s'", fieldName)
+				keys = append(keys[:i], keys[i+1:]...)
+			}
+			i--
+		}
+		return nil
+	})
 
 	if o.Sorted {
 		return table.getIndexSorted(keys, o)
