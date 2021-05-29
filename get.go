@@ -20,9 +20,6 @@ type GetOptions struct {
 
 // Get will get a single entry by its primary key. Returns (nil, nil) if nothing found.
 func (table *Table) Get(primaryKey interface{}) (interface{}, error) {
-	table.lock.RLock()
-	defer table.lock.RUnlock()
-
 	if primaryKey == nil {
 		return nil, nil
 	}
@@ -63,9 +60,6 @@ func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 // Result is not ordered. Use GetIndexSorted to return a sorted slice.
 // Returns an empty array if nothing found.
 func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOptions) ([]interface{}, error) {
-	table.lock.RLock()
-	defer table.lock.RUnlock()
-
 	if !table.IsIndexed(fieldName) {
 		table.log.Error("Field '%s' is not indexed", fieldName)
 		return nil, fmt.Errorf("field '%s' is not indexed", fieldName)
@@ -204,9 +198,6 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interfa
 // GetUnique will get a single entry based on the value of the provided unique field.
 // Returns (nil, nil) if nothing found.
 func (table *Table) GetUnique(fieldName string, value interface{}) (interface{}, error) {
-	table.lock.RLock()
-	defer table.lock.RUnlock()
-
 	if !table.IsUnique(fieldName) {
 		table.log.Error("Field '%s' is not unique", fieldName)
 		return nil, fmt.Errorf("field '%s' is not unique", fieldName)
@@ -237,9 +228,6 @@ func (table *Table) GetUnique(fieldName string, value interface{}) (interface{},
 
 // GetAll will get all of the entries in the table.
 func (table *Table) GetAll(options *GetOptions) ([]interface{}, error) {
-	table.lock.RLock()
-	defer table.lock.RUnlock()
-
 	o := GetOptions{}
 	if options != nil {
 		o = *options

@@ -11,9 +11,6 @@ import (
 
 // Delete will delete the provided object and clean indexes
 func (table *Table) Delete(o interface{}) error {
-	table.lock.Lock()
-	defer table.lock.Unlock()
-
 	typeOf := reflect.TypeOf(o)
 
 	if typeOf.Kind() == reflect.Ptr {

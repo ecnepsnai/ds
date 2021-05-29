@@ -171,7 +171,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		i--
 	}
 
-	log.Info("Migration successful")
+	log.Info("Migration successful: table_path='%s' entries_migrated=%d entries_skipped=%d", params.TablePath, results.EntriesMigrated, results.EntriesSkipped)
 	results.Success = true
 
 	if !params.KeepBackup {

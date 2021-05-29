@@ -16,16 +16,17 @@ func (table *Table) Update(o interface{}) error {
 		return fmt.Errorf("refusing to update pointer from table")
 	}
 
-	err := table.data.Update(func(tx *bbolt.Tx) error {
-		// Check for an existing object, if nothing found then just add it and call it a day
-		primaryKeyBytes, err := table.primaryKeyBytes(o)
-		if err != nil {
-			return err
-		}
-		existing, err := table.getPrimaryKey(primaryKeyBytes)
-		if err != nil {
-			return err
-		}
+	// Check for an existing object, if nothing found then just add it and call it a day
+	primaryKeyBytes, err := table.primaryKeyBytes(o)
+	if err != nil {
+		return err
+	}
+	existing, err := table.getPrimaryKey(primaryKeyBytes)
+	if err != nil {
+		return err
+	}
+
+	err = table.data.Update(func(tx *bbolt.Tx) error {
 		if existing == nil {
 			return table.add(tx, o)
 		}

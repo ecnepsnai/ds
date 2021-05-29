@@ -2,7 +2,6 @@ package ds
 
 import (
 	"reflect"
-	"sync"
 
 	"github.com/ecnepsnai/logtic"
 	"go.etcd.io/bbolt"
@@ -19,7 +18,6 @@ type Table struct {
 	uniques    []string
 	data       *bbolt.DB
 	options    Options
-	lock       *sync.RWMutex
 }
 
 // Close will close the table. This will not panic if the table has not been opened or already been closed.

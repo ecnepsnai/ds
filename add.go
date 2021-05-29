@@ -10,9 +10,6 @@ import (
 
 // Add will add a new object to the table. o must the the same type that was used to register the table and cannot be a pointer.
 func (table *Table) Add(o interface{}) error {
-	table.lock.Lock()
-	defer table.lock.Unlock()
-
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
