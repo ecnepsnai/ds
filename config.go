@@ -50,7 +50,9 @@ func (table *Table) getConfig(tx *bbolt.Tx) (*Config, error) {
 	}
 	config, err := gobDecodeConfig(configData)
 	if err != nil {
-		table.log.Error("Error decoding table config: %s", err.Error())
+		table.log.PError("Error decoding table config", map[string]interface{}{
+			"error": err.Error(),
+		})
 		return nil, err
 	}
 	return config, nil
@@ -68,7 +70,9 @@ func (config *Config) update(tx *bbolt.Tx) error {
 func (table *Table) initializeConfig(tx *bbolt.Tx, force bool) error {
 	configBucket, err := tx.CreateBucketIfNotExists(configKey)
 	if err != nil {
-		table.log.Error("Error creating config bucket: %s", err.Error())
+		table.log.PError("Error creating config bucket", map[string]interface{}{
+			"error": err.Error(),
+		})
 		return err
 	}
 	configData := configBucket.Get(configKey)

@@ -74,7 +74,11 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 		err = indexBucket.ForEach(func(k []byte, v []byte) error {
 			primaryKeys, err := gobDecodePrimaryKeyList(v)
 			if err != nil {
-				table.log.Error("Error decoding primary key list for Index(%s:%x): %s", indexField, k, err.Error())
+				table.log.PError("Error decoding primary key list for index", map[string]interface{}{
+					"index": indexField,
+					"key":   k,
+					"error": err.Error(),
+				})
 				return err
 			}
 
@@ -101,13 +105,21 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 			data := indexBucket.Get(key)
 			primaryKeys, err := gobDecodePrimaryKeyList(data)
 			if err != nil {
-				table.log.Error("Error decoding primary key list for Index(%s:%x): %s", indexField, k, err.Error())
+				table.log.PError("Error decoding primary key list for index", map[string]interface{}{
+					"index": indexField,
+					"key":   k,
+					"error": err.Error(),
+				})
 				return err
 			}
 
 			if len(primaryKeys) == 1 {
 				if err := indexBucket.Delete(key); err != nil {
-					table.log.Error("Error removing Index(%s:%x): %s", indexField, k, err.Error())
+					table.log.PError("Error removing index", map[string]interface{}{
+						"index": indexField,
+						"key":   k,
+						"error": err.Error(),
+					})
 					return err
 				}
 				table.log.Debug("Updating Index(%s:%x). Key count: 0", indexField, k)
@@ -118,11 +130,19 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 			table.log.Debug("Updating Index(%s:%x). Key count: %d", indexField, k, len(primaryKeys))
 			pkListBytes, err := gobEncode(primaryKeys)
 			if err != nil {
-				table.log.Error("Error encoding primary key list for index '%s': %s", indexField, err.Error())
+				table.log.PError("Error encoding primary key list for index", map[string]interface{}{
+					"index": indexField,
+					"key":   k,
+					"error": err.Error(),
+				})
 				return err
 			}
 			if err := indexBucket.Put(key, pkListBytes); err != nil {
-				table.log.Error("Error updating index '%s': %s", indexField, err.Error())
+				table.log.PError("Error updating index", map[string]interface{}{
+					"index": indexField,
+					"key":   k,
+					"error": err.Error(),
+				})
 				return err
 			}
 		}
@@ -133,14 +153,20 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 		uniqueValue := valueOf.FieldByName(unique)
 		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
 		if err != nil {
-			table.log.Error("Error encoding value for field '%s': %s", unique, err.Error())
+			table.log.PError("Error encoding value for field", map[string]interface{}{
+				"field": unique,
+				"error": err.Error(),
+			})
 			return err
 		}
 
 		uniqueBucket := tx.Bucket([]byte(uniquePrefix + unique))
 		table.log.Debug("Updating unique '%s'", unique)
 		if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
-			table.log.Error("Error removing unique '%s': %s", unique, err.Error())
+			table.log.PError("Error removing unique", map[string]interface{}{
+				"field": unique,
+				"error": err.Error(),
+			})
 			return err
 		}
 	}
@@ -202,13 +228,19 @@ func (table *Table) DeleteAll() error {
 
 func (table *Table) purgeBucket(tx *bbolt.Tx, bucketName []byte) error {
 	if err := tx.DeleteBucket(bucketName); err != nil {
-		table.log.Error("Error deleting bucket '%s': %s", bucketName, err.Error())
+		table.log.PError("Error deleting bucket", map[string]interface{}{
+			"bucket": bucketName,
+			"error":  err.Error(),
+		})
 		return err
 	}
 	table.log.Debug("Deleting bucket '%s'", bucketName)
 	_, err := tx.CreateBucket(bucketName)
 	if err != nil {
-		table.log.Error("Error creating bucket '%s': %s", bucketName, err.Error())
+		table.log.PError("Error creating bucket", map[string]interface{}{
+			"bucket": bucketName,
+			"error":  err.Error(),
+		})
 		return err
 	}
 	table.log.Warn("Bucket '%s' purged", bucketName)

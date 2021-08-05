@@ -36,7 +36,10 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 		indexValue := valueOf.FieldByName(index)
 		indexValueBytes, err := gobEncode(indexValue.Interface())
 		if err != nil {
-			table.log.Error("Error encoding value for field '%s': %s", index, err.Error())
+			table.log.PError("Error encoding value for field", map[string]interface{}{
+				"index": index,
+				"error": err.Error(),
+			})
 			return err
 		}
 
@@ -47,7 +50,10 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 		if data := indexBucket.Get(indexValueBytes); data != nil {
 			pk, err := gobDecodePrimaryKeyList(data)
 			if err != nil {
-				table.log.Error("Error decoding primary key list for index '%s': %s", index, err.Error())
+				table.log.PError("Error decoding primary key list for index", map[string]interface{}{
+					"index": index,
+					"error": err.Error(),
+				})
 				return err
 			}
 			primaryKeys = pk
@@ -59,11 +65,17 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 		table.log.Debug("Updating index '%s'. Key count: %d", index, len(primaryKeys))
 		pkListBytes, err := gobEncode(primaryKeys)
 		if err != nil {
-			table.log.Error("Error encoding primary key list for index '%s': %s", index, err.Error())
+			table.log.PError("Error encoding primary key list for index", map[string]interface{}{
+				"index": index,
+				"error": err.Error(),
+			})
 			return err
 		}
 		if err := indexBucket.Put(indexValueBytes, pkListBytes); err != nil {
-			table.log.Error("Error updating index '%s': %s", index, err.Error())
+			table.log.PError("Error updating index", map[string]interface{}{
+				"index": index,
+				"error": err.Error(),
+			})
 			return err
 		}
 	}
@@ -76,7 +88,10 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 		uniqueValue := valueOf.FieldByName(unique)
 		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
 		if err != nil {
-			table.log.Error("Error encoding value for field '%s': %s", unique, err.Error())
+			table.log.PError("Error encoding value for field", map[string]interface{}{
+				"field": unique,
+				"error": err.Error(),
+			})
 			return err
 		}
 
@@ -87,19 +102,31 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 			// Check that if there is a duplicate unique value that it actually maps to data.
 			// If it doesn't, delete the unmatched value
 			if tx.Bucket(dataKey).Get(data) != nil {
-				table.log.Error("Non-unique value for unique field '%s'", unique)
+				table.log.PError("Duplicate value for unique field", map[string]interface{}{
+					"field": unique,
+					"value": uniqueValueBytes,
+				})
 				return fmt.Errorf("non-unique value for unique field '%s'", unique)
 			} else {
 				if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
-					table.log.Error("Failed to correct unmatched unique value for field '%s': %s", unique, err.Error())
+					table.log.PError("Failed to correct unmatched unique value", map[string]interface{}{
+						"field": unique,
+						"value": uniqueValueBytes,
+						"error": err.Error(),
+					})
 					return err
 				}
-				table.log.Warn("Corrected unmatched duplicate unique value for field '%s'", unique)
+				table.log.PWarn("Corrected unmatched duplicate unique value", map[string]interface{}{
+					"field": unique,
+				})
 			}
 		}
 		table.log.Debug("Updating unique '%s'", unique)
 		if err := uniqueBucket.Put(uniqueValueBytes, primaryKeyBytes); err != nil {
-			table.log.Error("Error updating unique '%s': %s", unique, err.Error())
+			table.log.PError("Error updating unique", map[string]interface{}{
+				"field": unique,
+				"error": err.Error(),
+			})
 			return err
 		}
 	}
@@ -142,18 +169,24 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 
 		index := config.LastInsertIndex + 1
 		if err := table.setInsertIndexForObject(tx, valueOf, index); err != nil {
-			table.log.Error("Error updating insert index for entry: %s", err.Error())
+			table.log.PError("Error updating insert index for entry", map[string]interface{}{
+				"error": err.Error(),
+			})
 			return err
 		}
 		config.LastInsertIndex = index
 		if err := config.update(tx); err != nil {
-			table.log.Error("Error updating table config: %s", err.Error())
+			table.log.PError("Error updating table config", map[string]interface{}{
+				"error": err.Error(),
+			})
 			return err
 		}
 	}
 
 	if err := dataBucket.Put(primaryKeyBytes, data); err != nil {
-		table.log.Error("Error inserting new object: %s", err.Error())
+		table.log.PError("Error inserting new object", map[string]interface{}{
+			"error": err.Error(),
+		})
 		return err
 	}
 
