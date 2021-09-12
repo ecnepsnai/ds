@@ -19,7 +19,7 @@ func TestAdd(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -44,7 +44,7 @@ func TestAddIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -74,7 +74,7 @@ func TestAddTypeMismatch(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -101,7 +101,7 @@ func TestAddPointer(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -130,7 +130,7 @@ func TestAddDuplicatePrimaryKey(t *testing.T) {
 
 	primaryKey := randomString(12)
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -166,7 +166,7 @@ func TestAddDuplicateUnique(t *testing.T) {
 
 	unique := randomString(12)
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -201,7 +201,7 @@ func TestAddUnmatchedUnique(t *testing.T) {
 
 	unique := randomString(12)
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	table, err := ds.Register(exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
@@ -247,7 +247,7 @@ func TestAddDifferentStruct(t *testing.T) {
 
 	table, err := ds.Register(struct {
 		Primary string `ds:"primary"`
-	}{}, path.Join(tmpDir, randomString(12)), nil)
+	}{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -281,7 +281,7 @@ func TestAddBadStruct(t *testing.T) {
 		Primary string `ds:"primary"`
 		Index   string `ds:"index"`
 		Unique  string `ds:"unique"`
-	}{}, path.Join(tmpDir, randomString(12)), nil)
+	}{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}

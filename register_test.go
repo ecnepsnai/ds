@@ -20,7 +20,7 @@ func TestRegister(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err != nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -33,7 +33,7 @@ func TestRegisterMultiplePrimaryKey(t *testing.T) {
 		Primary2 string `ds:"primary"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err == nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with multiple primary keys")
 	}
 }
@@ -46,7 +46,7 @@ func TestRegisterNoPrimaryKey(t *testing.T) {
 		Unique string `ds:"unique"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err == nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with no primary keys")
 	}
 }
@@ -60,11 +60,11 @@ func TestRegisterMultipleOfSameType(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err != nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err != nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -82,7 +82,7 @@ func TestRegisterNoExportedFields(t *testing.T) {
 		primary: randomString(6),
 		index:   randomString(6),
 		unique:  randomString(6),
-	}, path.Join(tmpDir, randomString(12)), nil); err != nil {
+	}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -92,7 +92,7 @@ func TestRegisterNoFields(t *testing.T) {
 
 	type exampleType struct{}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err == nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with no fields")
 	}
 }
@@ -105,7 +105,7 @@ func TestRegisterOtherTags(t *testing.T) {
 		SomethingElse string `json:"something_else"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err != nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -119,7 +119,7 @@ func TestRegisterUnknownStructTag(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil); err == nil {
+	if _, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with unknown struct tag")
 	}
 }
@@ -135,7 +135,7 @@ func TestRegisterPointer(t *testing.T) {
 
 	object := exampleType{}
 
-	if _, err := ds.Register(&object, path.Join(tmpDir, randomString(12)), nil); err == nil {
+	if _, err := ds.Register(&object, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register pointer")
 	}
 }
@@ -149,7 +149,7 @@ func TestRegisterOpenClose(t *testing.T) {
 		Index   string `ds:"index"`
 		Unique  string `ds:"unique"`
 	}
-	dsPath := path.Join(tmpDir, randomString(12))
+	dsPath := path.Join(t.TempDir(), randomString(12))
 
 	table, err := ds.Register(exampleType{}, dsPath, nil)
 	if err != nil {
@@ -186,7 +186,7 @@ func TestRegisterOpenClose(t *testing.T) {
 func TestRegisterLockedFile(t *testing.T) {
 	t.Parallel()
 
-	dsPath := path.Join(tmpDir, randomString(12))
+	dsPath := path.Join(t.TempDir(), randomString(12))
 	file, err := os.OpenFile(dsPath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		t.Errorf("Error making test file: %s", err.Error())
@@ -216,7 +216,7 @@ func TestRegisterWrongType(t *testing.T) {
 		Index   string `ds:"index"`
 		Unique  string `ds:"unique"`
 	}
-	dsPath := path.Join(tmpDir, randomString(12))
+	dsPath := path.Join(t.TempDir(), randomString(12))
 
 	table, err := ds.Register(exampleType{}, dsPath, nil)
 	if err != nil {
@@ -255,7 +255,7 @@ func TestRegisterChangeOptions(t *testing.T) {
 		Index   string `ds:"index"`
 		Unique  string `ds:"unique"`
 	}
-	dsPath := path.Join(tmpDir, randomString(12))
+	dsPath := path.Join(t.TempDir(), randomString(12))
 
 	table, err := ds.Register(exampleType{}, dsPath, &ds.Options{
 		DisableSorting: true,
@@ -288,7 +288,7 @@ func TestRegisterChangeOptions(t *testing.T) {
 func TestRegisterExistingBoltTable(t *testing.T) {
 	t.Parallel()
 
-	dsPath := path.Join(tmpDir, randomString(12))
+	dsPath := path.Join(t.TempDir(), randomString(12))
 	db, err := bbolt.Open(dsPath, 0644, nil)
 	if err != nil {
 		t.Errorf("Error opening bolt db: %s", err.Error())
@@ -322,7 +322,7 @@ func TestRegisterExistingBoltTable(t *testing.T) {
 func TestRegisterChangePrimaryKey(t *testing.T) {
 	t.Parallel()
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	// Register first table
 	table, err := ds.Register(struct {
@@ -345,7 +345,7 @@ func TestRegisterChangePrimaryKey(t *testing.T) {
 func TestRegisterChangeField(t *testing.T) {
 	t.Parallel()
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	// Register first table
 	table, err := ds.Register(struct {
@@ -368,7 +368,7 @@ func TestRegisterChangeField(t *testing.T) {
 func TestRegisterChangeTag(t *testing.T) {
 	t.Parallel()
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	// Register first table
 	table, err := ds.Register(struct {
@@ -391,7 +391,7 @@ func TestRegisterChangeTag(t *testing.T) {
 }
 
 func TestRegisterOldVersion(t *testing.T) {
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	data, err := bbolt.Open(tablePath, os.ModePerm, nil)
 	if err != nil {

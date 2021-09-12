@@ -19,7 +19,7 @@ func TestGet(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -53,7 +53,7 @@ func TestGetIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -92,7 +92,7 @@ func TestGetUnmatchedIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	table, err := ds.Register(exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
@@ -151,7 +151,7 @@ func TestGetIndexSortedAscending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -197,7 +197,7 @@ func TestGetIndexSortedDescending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -242,7 +242,7 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), &ds.Options{DisableSorting: true})
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), &ds.Options{DisableSorting: true})
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -281,7 +281,7 @@ func TestGetUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -317,7 +317,7 @@ func TestGetUnmatchedUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	table, err := ds.Register(exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
@@ -367,7 +367,7 @@ func TestGetNilPrimaryKey(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -390,7 +390,7 @@ func TestGetNonindexedField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -413,7 +413,7 @@ func TestGetNonuniqueField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -436,7 +436,7 @@ func TestGetAll(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -474,7 +474,7 @@ func TestGetAllSortedAscending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -520,7 +520,7 @@ func TestGetAllSortedDescending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -564,7 +564,7 @@ func TestGetNoResults(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -612,7 +612,7 @@ func TestGetIndexMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -673,7 +673,7 @@ func TestGetAllMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -734,7 +734,7 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -795,7 +795,7 @@ func TestGetAllSortedMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(tmpDir, randomString(12)), nil)
+	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}

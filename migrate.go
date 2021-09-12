@@ -81,7 +81,7 @@ type MigrationResults struct {
 // Ensure you read the documentation of the MigrateParams struct, as it goes into greater detail on the parameters
 // required for migration, and what they do.
 func Migrate(params MigrateParams) (results MigrationResults) {
-	log := logtic.Connect("ds-migration")
+	log := logtic.Log.Connect("ds-migration")
 
 	if err := params.validate(); err != nil {
 		log.Error("%s", err.Error())

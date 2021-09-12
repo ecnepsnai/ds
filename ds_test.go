@@ -9,42 +9,28 @@ import (
 	"github.com/ecnepsnai/logtic"
 )
 
-var tmpDir string
-var verbose bool
-
-func isTestVerbose() bool {
+func testSetup() {
+	verbose := false
 	for _, arg := range os.Args {
 		if arg == "-test.v=true" {
-			return true
+			verbose = true
 		}
 	}
-
-	return false
-}
-
-func testSetup() {
-	tmp, err := os.MkdirTemp("", "certbox")
-	if err != nil {
-		panic(err)
-	}
-	tmpDir = tmp
 
 	if verbose {
 		logtic.Log.FilePath = "/dev/null"
 		logtic.Log.Level = logtic.LevelDebug
-		if err := logtic.Open(); err != nil {
+		if err := logtic.Log.Open(); err != nil {
 			panic(err)
 		}
 	}
 }
 
 func testTeardown() {
-	os.RemoveAll(tmpDir)
-	logtic.Close()
+	logtic.Log.Close()
 }
 
 func TestMain(m *testing.M) {
-	verbose = isTestVerbose()
 	testSetup()
 	retCode := m.Run()
 	testTeardown()

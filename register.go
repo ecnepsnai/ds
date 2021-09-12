@@ -32,7 +32,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 	table := Table{
 		Name:   typeOf.Name(),
 		typeOf: typeOf,
-		log:    logtic.Connect("ds(" + typeOf.Name() + ")"),
+		log:    logtic.Log.Connect("ds(" + typeOf.Name() + ")"),
 	}
 	if options != nil {
 		table.options = *options

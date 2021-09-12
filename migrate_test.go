@@ -23,7 +23,7 @@ func TestMigrate(t *testing.T) {
 			Password string
 		}
 
-		tp := path.Join(tmpDir, randomString(12))
+		tp := path.Join(t.TempDir(), randomString(12))
 		table, err := ds.Register(user{}, tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
@@ -105,7 +105,7 @@ func TestMigrateSkip(t *testing.T) {
 		SomethingElse int
 	}
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	table, err := ds.Register(oldType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
@@ -178,7 +178,7 @@ func TestMigrateFail(t *testing.T) {
 		SomethingElse int
 	}
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	table, err := ds.Register(oldType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
@@ -238,7 +238,7 @@ func TestMigrateParams(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	table, err := ds.Register(exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
@@ -365,7 +365,7 @@ func TestMigrateParams(t *testing.T) {
 func TestMigrateSorted(t *testing.T) {
 	t.Parallel()
 
-	tablePath := path.Join(tmpDir, randomString(12))
+	tablePath := path.Join(t.TempDir(), randomString(12))
 	type originalUser struct {
 		ID     int `ds:"primary"`
 		Value1 string
