@@ -1,3 +1,16 @@
+# v1.6.2
+
+- Update dependencies
+- Improved tests
+
+# v1.6.1
+
+- Update to go 1.17
+
+# v1.6.0
+
+- DS tables may have unmatched indexed or unique field values [#2](https://github.com/ecnepsnai/ds/issues/2)
+
 # v1.5.1
 
 - Fixed a number of issues identified by static analysis
