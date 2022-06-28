@@ -46,7 +46,7 @@ func (table *Table) getConfig(tx *bbolt.Tx) (*Config, error) {
 	configData := tx.Bucket(configKey).Get(configKey)
 	if configData == nil {
 		table.log.Error("No config present for table")
-		return nil, fmt.Errorf("no config present for table")
+		return nil, fmt.Errorf("%s: no config present", ErrBadTableFile)
 	}
 	config, err := gobDecodeConfig(configData)
 	if err != nil {
@@ -106,12 +106,12 @@ func (table *Table) initializeConfig(tx *bbolt.Tx, force bool) error {
 		}
 		if config.Version > currentDSSchemaVersion {
 			table.log.Error("Unable to register existing table %s as it's from a newer version of DS. %d > %d", table.Name, config.Version, currentDSSchemaVersion)
-			return fmt.Errorf("table is from newer version of ds")
+			return fmt.Errorf("%s: version mismatch", ErrBadTableFile)
 		}
 		table.log.Debug("TypeOf matches")
 		if !force && config.PrimaryKey != table.primaryKey {
 			table.log.Error("Cannot change primary key of table")
-			return fmt.Errorf("cannot change primary key of table")
+			return fmt.Errorf("%s: primary key", ErrPropertyChanged)
 		}
 		table.log.Debug("PrimaryKey matches")
 	}
@@ -132,7 +132,7 @@ func (table *Table) initializeConfig(tx *bbolt.Tx, force bool) error {
 
 		if !options.compare(table.options) {
 			table.log.Error("Cannot change options of existing table")
-			return fmt.Errorf("cannot change options of existing table")
+			return fmt.Errorf("%s: table options", ErrPropertyChanged)
 		}
 		table.log.Debug("Config matches")
 	}

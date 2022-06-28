@@ -13,7 +13,7 @@ func (table *Table) Add(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
-		return fmt.Errorf("refusing to add a pointer to the table")
+		return fmt.Errorf(ErrPointer)
 	}
 	if err := compareFields(table.getFields(), structFieldsToFields(allFields(typeOf))); err != nil {
 		table.log.Error("Incompatible object definition: %s", err.Error())
@@ -106,7 +106,7 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 					"field": unique,
 					"value": uniqueValueBytes,
 				})
-				return fmt.Errorf("non-unique value for unique field '%s'", unique)
+				return fmt.Errorf("%s: %s", ErrDuplicateUnique, unique)
 			} else {
 				if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
 					table.log.PError("Failed to correct unmatched unique value", map[string]interface{}{
@@ -151,7 +151,7 @@ func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
 	dataBucket := tx.Bucket(dataKey)
 	if data := dataBucket.Get(primaryKeyBytes); data != nil {
 		table.log.Error("Duplicate primary key")
-		return fmt.Errorf("duplicate primary key")
+		return fmt.Errorf(ErrDuplicatePrimaryKey)
 	}
 
 	if err := table.addUpdateIndex(tx, valueOf, primaryKeyBytes); err != nil {

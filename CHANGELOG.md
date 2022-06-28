@@ -1,3 +1,9 @@
+# v1.7.0
+
+**This Release Contains Breaking changes**
+
+- [**Breaking**] Errors have been made into constant objects. Some errors have changed. If your application relies on checking for specific errors from ds then you will need to update those checks to use `ds.Err*` constants.
+
 # v1.6.2
 
 - Update dependencies

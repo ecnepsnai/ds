@@ -67,7 +67,7 @@ func (table *Table) getKeysFromFields() (string, []string, []string, error) {
 
 	if len(primaryKey) <= 0 {
 		table.log.Error("A primary key is required")
-		return "", nil, nil, fmt.Errorf("a primary key is required")
+		return "", nil, nil, fmt.Errorf("%s: Primary", ErrMissingRequiredValue)
 	}
 
 	return primaryKey, indexes, uniques, nil
@@ -92,16 +92,16 @@ func compareFields(oldFields, newFields []Field) error {
 			}
 
 			if newField.Type != oldField.Type {
-				return fmt.Errorf("cannot change type of field '%s' without migration. new='%s' old='%s'", newField.Name, oldField.Type, newField.Type)
+				return fmt.Errorf("%s: field type", ErrPropertyChanged)
 			}
 			if newField.Tag != oldField.Tag {
-				return fmt.Errorf("cannot change tag of field '%s' without migration. new='%s' old='%s'", newField.Name, oldField.Tag, newField.Tag)
+				return fmt.Errorf("%s: field name", ErrPropertyChanged)
 			}
 		}
 	}
 
 	if newPrimary.Name != oldPrimary.Name {
-		return fmt.Errorf("cannot change name of primary field '%s'", oldPrimary.Name)
+		return fmt.Errorf("%s: primary field", ErrPropertyChanged)
 	}
 
 	return nil

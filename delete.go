@@ -15,7 +15,7 @@ func (table *Table) Delete(o interface{}) error {
 
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to delete a pointer from a table")
-		return fmt.Errorf("refusing to delete a pointer from a table")
+		return fmt.Errorf(ErrPointer)
 	} else if table.typeOf.Name() != typeOf.Name() {
 		table.log.Error("Cannot delete type '%s' from table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
 		return fmt.Errorf("cannot delete type '%s' from table registered for type '%s'", typeOf.Name(), table.typeOf.Name())

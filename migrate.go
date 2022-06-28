@@ -34,25 +34,25 @@ type MigrateParams struct {
 
 func (params MigrateParams) validate() error {
 	if _, err := os.Stat(params.TablePath); err != nil {
-		return fmt.Errorf("TablePath does not exist or cannot be accessed: %s", err.Error())
+		return fmt.Errorf("%s: %s", ErrMigrateTablePathNotFound, err.Error())
 	}
 	if params.NewPath == "" {
-		return fmt.Errorf("NewPath is required")
+		return fmt.Errorf("%s: NewPath", ErrMissingRequiredValue)
 	}
 	if params.OldType == nil {
-		return fmt.Errorf("OldType is required")
+		return fmt.Errorf("%s: OldType", ErrMissingRequiredValue)
 	}
 	if params.NewType == nil {
-		return fmt.Errorf("NewType is required")
+		return fmt.Errorf("%s: NewType", ErrMissingRequiredValue)
 	}
 	if params.MigrateObject == nil {
-		return fmt.Errorf("MigrateObject method required")
+		return fmt.Errorf("%s: MigrateObject", ErrMissingRequiredValue)
 	}
 	if typeOf := reflect.TypeOf(params.NewType); typeOf.Kind() == reflect.Ptr {
-		return fmt.Errorf("NewType cannot be a pointer")
+		return fmt.Errorf("%s: NewType", ErrPointer)
 	}
 	if typeOf := reflect.TypeOf(params.OldType); typeOf.Kind() == reflect.Ptr {
-		return fmt.Errorf("OldType cannot be a pointer")
+		return fmt.Errorf("%s: OldType", ErrPointer)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	if _, err := os.Stat(backupPath); err == nil {
 		log.Error("Backup copy of table already exists at '%s'", backupPath)
 		results.Success = false
-		results.Error = fmt.Errorf("backup copy of table exists")
+		results.Error = os.ErrExist
 		return
 	}
 
@@ -171,7 +171,11 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		i--
 	}
 
-	log.Info("Migration successful: table_path='%s' entries_migrated=%d entries_skipped=%d", params.TablePath, results.EntriesMigrated, results.EntriesSkipped)
+	log.PInfo("Migration successful", map[string]interface{}{
+		"table_path":     params.TablePath,
+		"migrated_count": results.EntriesMigrated,
+		"skipped_count":  results.EntriesSkipped,
+	})
 	results.Success = true
 
 	if !params.KeepBackup {

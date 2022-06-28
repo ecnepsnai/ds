@@ -19,7 +19,7 @@ var currentDSSchemaVersion = 1
 func Register(o interface{}, filePath string, options *Options) (*Table, error) {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
-		return nil, fmt.Errorf("refusing to register table to a pointer")
+		return nil, fmt.Errorf(ErrPointer)
 	}
 
 	// Gob will panic if you register the same object twice.
@@ -49,7 +49,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 
 	if err := checkForExistingBoltTable(filePath); err != nil {
 		table.log.Error("Existing file '%s' that is not recognized as a DS table", filePath)
-		return nil, fmt.Errorf("bad table file")
+		return nil, fmt.Errorf("%s: %s", ErrBadTableFile, err.Error())
 	}
 
 	force := false
@@ -128,7 +128,7 @@ func checkForExistingBoltTable(filePath string) error {
 		defer recover()
 		bucket := tx.Bucket(configKey)
 		if bucket == nil {
-			return fmt.Errorf("no bucket found")
+			return fmt.Errorf("%s: %s", ErrBadTableFile, "no bucket found")
 		}
 		return nil
 	})

@@ -13,7 +13,7 @@ import (
 func (table *Table) Update(o interface{}) error {
 	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to update pointer from table")
-		return fmt.Errorf("refusing to update pointer from table")
+		return fmt.Errorf(ErrPointer)
 	}
 
 	// Check for an existing object, if nothing found then just add it and call it a day
