@@ -18,7 +18,7 @@ func testSetup() {
 	}
 
 	if verbose {
-		logtic.Log.FilePath = "/dev/null"
+		logtic.Log.FilePath = os.DevNull
 		logtic.Log.Level = logtic.LevelDebug
 		if err := logtic.Log.Open(); err != nil {
 			panic(err)

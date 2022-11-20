@@ -10,7 +10,13 @@ import (
 // Update will update an existing object in the table. The primary key must match for this object
 // otherwise it will just be inserted as a new object. Updated objects do not change positions in a sorted
 // table.
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) Update(o interface{}) error {
+	return table.update(o)
+}
+
+func (table *Table) update(o interface{}) error {
 	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to update pointer from table")
 		return fmt.Errorf(ErrPointer)
@@ -28,7 +34,7 @@ func (table *Table) Update(o interface{}) error {
 
 	err = table.data.Update(func(tx *bbolt.Tx) error {
 		if existing == nil {
-			return table.add(tx, o)
+			return table.addObject(tx, o)
 		}
 
 		var index *uint64
@@ -40,10 +46,10 @@ func (table *Table) Update(o interface{}) error {
 			index = i
 		}
 
-		if err := table.delete(tx, o); err != nil {
+		if err := table.deleteObject(tx, o); err != nil {
 			return err
 		}
-		if err := table.add(tx, o); err != nil {
+		if err := table.addObject(tx, o); err != nil {
 			return err
 		}
 

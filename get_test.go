@@ -24,23 +24,26 @@ func TestGet(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: primaryKey,
-		Index:   randomString(12),
-		Unique:  randomString(12),
-	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = tx.Add(exampleType{
+			Primary: primaryKey,
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
 
-	v, err := table.Get(primaryKey)
-	if err != nil {
-		t.Errorf("Error getting object: %s", err.Error())
-	}
-	got := v.(exampleType).Primary
-	if got != primaryKey {
-		t.Errorf("Incorrect primary key returned. Expected '%s' got '%s", primaryKey, got)
-	}
+		v, err := tx.Get(primaryKey)
+		if err != nil {
+			t.Errorf("Error getting object: %s", err.Error())
+		}
+		got := v.(exampleType).Primary
+		if got != primaryKey {
+			t.Errorf("Incorrect primary key returned. Expected '%s' got '%s", primaryKey, got)
+		}
+		return nil
+	})
 }
 
 func TestGetIndex(t *testing.T) {
@@ -58,27 +61,30 @@ func TestGetIndex(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Unique:  randomString(12),
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Unique:  randomString(12),
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	objects, err := table.GetIndex("Index", index, nil)
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
+		objects, err := tx.GetIndex("Index", index, nil)
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
+		}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		return nil
+	})
 }
 
 // Test that if there are unmatched index values they aren't returned
@@ -98,20 +104,23 @@ func TestGetUnmatchedIndex(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	// Add data to the table
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Unique:  randomString(12),
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		// Add data to the table
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Unique:  randomString(12),
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
+		return nil
+	})
 	table.Close()
 
 	// Delete just the data buckets - leaving everything else
@@ -131,14 +140,17 @@ func TestGetUnmatchedIndex(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	// This should return nothing
-	objects, err := table.GetIndex("Index", index, nil)
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) > 0 {
-		t.Errorf("Unexpected object count returned. Expected 0 got %d", len(objects))
-	}
+	table.StartRead(func(tx ds.IReadTransaction) error {
+		// This should return nothing
+		objects, err := tx.GetIndex("Index", index, nil)
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
+		}
+		if len(objects) > 0 {
+			t.Errorf("Unexpected object count returned. Expected 0 got %d", len(objects))
+		}
+		return nil
+	})
 }
 
 func TestGetIndexSortedAscending(t *testing.T) {
@@ -156,35 +168,38 @@ func TestGetIndexSortedAscending(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Value:   i,
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	// Ascending
-	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true})
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
-	for i, object := range objects {
-		example := object.(exampleType)
-		expect := (count - 1) - i
-		if expect != example.Value {
-			t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
+		// Ascending
+		objects, err := tx.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true})
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
 		}
-	}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		for i, object := range objects {
+			example := object.(exampleType)
+			expect := (count - 1) - i
+			if expect != example.Value {
+				t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
+			}
+		}
+		return nil
+	})
 }
 
 func TestGetIndexSortedDescending(t *testing.T) {
@@ -202,34 +217,37 @@ func TestGetIndexSortedDescending(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Value:   i,
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	// Descending
-	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: false})
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
-	for i, object := range objects {
-		example := object.(exampleType)
-		if i != example.Value {
-			t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
+		// Descending
+		objects, err := tx.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: false})
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
 		}
-	}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		for i, object := range objects {
+			example := object.(exampleType)
+			if i != example.Value {
+				t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
+			}
+		}
+		return nil
+	})
 }
 
 func TestGetIndexSortedNonSortedTable(t *testing.T) {
@@ -247,28 +265,31 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Value:   i,
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	// Ascending
-	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true})
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
+		// Ascending
+		objects, err := tx.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true})
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
+		}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		return nil
+	})
 }
 
 func TestGetUnique(t *testing.T) {
@@ -286,26 +307,29 @@ func TestGetUnique(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  unique,
-	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = tx.Add(exampleType{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  unique,
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
 
-	v, err := table.GetUnique("Unique", unique)
-	if err != nil {
-		t.Errorf("Error getting object: %s", err.Error())
-	}
-	if v == nil {
-		t.Fatalf("No data returned when expected")
-	}
-	got := v.(exampleType).Unique
-	if got != unique {
-		t.Errorf("Incorrect unique value returned. Expected '%s' got '%s", unique, got)
-	}
+		v, err := tx.GetUnique("Unique", unique)
+		if err != nil {
+			t.Errorf("Error getting object: %s", err.Error())
+		}
+		if v == nil {
+			t.Fatalf("No data returned when expected")
+		}
+		got := v.(exampleType).Unique
+		if got != unique {
+			t.Errorf("Incorrect unique value returned. Expected '%s' got '%s", unique, got)
+		}
+		return nil
+	})
 }
 
 func TestGetUnmatchedUnique(t *testing.T) {
@@ -323,13 +347,16 @@ func TestGetUnmatchedUnique(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Unique:  unique,
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = tx.Add(exampleType{
+			Primary: randomString(12),
+			Unique:  unique,
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
 	table.Close()
 
 	// Delete just the data buckets - leaving everything else
@@ -349,13 +376,16 @@ func TestGetUnmatchedUnique(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	v, err := table.GetUnique("Unique", unique)
-	if err != nil {
-		t.Errorf("Error getting object: %s", err.Error())
-	}
-	if v != nil {
-		t.Errorf("Unexpected data returned when none expected")
-	}
+	table.StartRead(func(tx ds.IReadTransaction) error {
+		v, err := tx.GetUnique("Unique", unique)
+		if err != nil {
+			t.Errorf("Error getting object: %s", err.Error())
+		}
+		if v != nil {
+			t.Errorf("Unexpected data returned when none expected")
+		}
+		return nil
+	})
 }
 
 func TestGetNilPrimaryKey(t *testing.T) {
@@ -372,13 +402,16 @@ func TestGetNilPrimaryKey(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	object, err := table.Get(nil)
-	if err != nil {
-		t.Errorf("Unexpected error getting value: %s", err.Error())
-	}
-	if object != nil {
-		t.Errorf("Unexpected object value returned for nil primary key")
-	}
+	table.StartRead(func(tx ds.IReadTransaction) error {
+		object, err := tx.Get(nil)
+		if err != nil {
+			t.Errorf("Unexpected error getting value: %s", err.Error())
+		}
+		if object != nil {
+			t.Errorf("Unexpected object value returned for nil primary key")
+		}
+		return nil
+	})
 }
 
 func TestGetNonindexedField(t *testing.T) {
@@ -395,13 +428,16 @@ func TestGetNonindexedField(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	object, err := table.GetIndex(randomString(12), randomString(12), nil)
-	if err == nil {
-		t.Errorf("No error seen while attempting to get nonindexed field")
-	}
-	if object != nil {
-		t.Errorf("Unexpected object value returned for nil primary key")
-	}
+	table.StartRead(func(tx ds.IReadTransaction) error {
+		object, err := tx.GetIndex(randomString(12), randomString(12), nil)
+		if err == nil {
+			t.Errorf("No error seen while attempting to get nonindexed field")
+		}
+		if object != nil {
+			t.Errorf("Unexpected object value returned for nil primary key")
+		}
+		return nil
+	})
 }
 
 func TestGetNonuniqueField(t *testing.T) {
@@ -418,13 +454,16 @@ func TestGetNonuniqueField(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	object, err := table.GetUnique(randomString(12), randomString(12))
-	if err == nil {
-		t.Errorf("No error seen while attempting to get nonunique field")
-	}
-	if object != nil {
-		t.Errorf("Unexpected object value returned for nil primary key")
-	}
+	table.StartRead(func(tx ds.IReadTransaction) error {
+		object, err := tx.GetUnique(randomString(12), randomString(12))
+		if err == nil {
+			t.Errorf("No error seen while attempting to get nonunique field")
+		}
+		if object != nil {
+			t.Errorf("Unexpected object value returned for nil primary key")
+		}
+		return nil
+	})
 }
 
 func TestGetAll(t *testing.T) {
@@ -441,27 +480,30 @@ func TestGetAll(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   randomString(12),
-			Unique:  randomString(12),
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   randomString(12),
+				Unique:  randomString(12),
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	objects, err := table.GetAll(nil)
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
+		objects, err := tx.GetAll(nil)
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
+		}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		return nil
+	})
 }
 
 func TestGetAllSortedAscending(t *testing.T) {
@@ -479,35 +521,38 @@ func TestGetAllSortedAscending(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Value:   i,
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	// Ascending
-	objects, err := table.GetAll(&ds.GetOptions{Sorted: true, Ascending: true})
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
-	for i, object := range objects {
-		example := object.(exampleType)
-		expect := (count - 1) - i
-		if expect != example.Value {
-			t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
+		// Ascending
+		objects, err := tx.GetAll(&ds.GetOptions{Sorted: true, Ascending: true})
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
 		}
-	}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		for i, object := range objects {
+			example := object.(exampleType)
+			expect := (count - 1) - i
+			if expect != example.Value {
+				t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
+			}
+		}
+		return nil
+	})
 }
 
 func TestGetAllSortedDescending(t *testing.T) {
@@ -525,34 +570,37 @@ func TestGetAllSortedDescending(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Value:   i,
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	// Descending
-	objects, err := table.GetAll(&ds.GetOptions{Sorted: true, Ascending: false})
-	if err != nil {
-		t.Errorf("Error getting many objects: %s", err.Error())
-	}
-	if len(objects) != count {
-		t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
-	}
-	for i, object := range objects {
-		example := object.(exampleType)
-		if i != example.Value {
-			t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
+		// Descending
+		objects, err := tx.GetAll(&ds.GetOptions{Sorted: true, Ascending: false})
+		if err != nil {
+			t.Errorf("Error getting many objects: %s", err.Error())
 		}
-	}
+		if len(objects) != count {
+			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
+		}
+		for i, object := range objects {
+			example := object.(exampleType)
+			if i != example.Value {
+				t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
+			}
+		}
+		return nil
+	})
 }
 
 func TestGetNoResults(t *testing.T) {
@@ -569,37 +617,40 @@ func TestGetNoResults(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	object, err := table.Get(randomString(12))
-	if err != nil {
-		t.Errorf("Unexpected error getting item: %s", err.Error())
-	}
-	if object != nil {
-		t.Error("Object(s) returned when expected nil")
-	}
+	table.StartRead(func(tx ds.IReadTransaction) error {
+		object, err := tx.Get(randomString(12))
+		if err != nil {
+			t.Errorf("Unexpected error getting item: %s", err.Error())
+		}
+		if object != nil {
+			t.Error("Object(s) returned when expected nil")
+		}
 
-	objects, err := table.GetIndex("Index", randomString(12), nil)
-	if err != nil {
-		t.Errorf("Unexpected error getting item: %s", err.Error())
-	}
-	if len(objects) > 0 {
-		t.Error("Object(s) returned when expected nil")
-	}
+		objects, err := tx.GetIndex("Index", randomString(12), nil)
+		if err != nil {
+			t.Errorf("Unexpected error getting item: %s", err.Error())
+		}
+		if len(objects) > 0 {
+			t.Error("Object(s) returned when expected nil")
+		}
 
-	object, err = table.GetUnique("Unique", randomString(12))
-	if err != nil {
-		t.Errorf("Unexpected error getting item: %s", err.Error())
-	}
-	if object != nil {
-		t.Error("Object(s) returned when expected nil")
-	}
+		object, err = tx.GetUnique("Unique", randomString(12))
+		if err != nil {
+			t.Errorf("Unexpected error getting item: %s", err.Error())
+		}
+		if object != nil {
+			t.Error("Object(s) returned when expected nil")
+		}
 
-	objects, err = table.GetAll(&ds.GetOptions{Sorted: true})
-	if err != nil {
-		t.Errorf("Unexpected error getting item: %s", err.Error())
-	}
-	if len(objects) > 0 {
-		t.Errorf("Object(s) returned when expected nil: %+v", objects)
-	}
+		objects, err = tx.GetAll(&ds.GetOptions{Sorted: true})
+		if err != nil {
+			t.Errorf("Unexpected error getting item: %s", err.Error())
+		}
+		if len(objects) > 0 {
+			t.Errorf("Object(s) returned when expected nil: %+v", objects)
+		}
+		return nil
+	})
 }
 
 func TestGetIndexMaximum(t *testing.T) {
@@ -617,50 +668,53 @@ func TestGetIndexMaximum(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
+		}
+
+		max := 5
+		objects, err := tx.GetIndex("Index", index, &ds.GetOptions{Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
+
+		returned := len(objects)
+		if returned != max {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
+		}
+
+		tx.DeleteAll()
+		err = tx.Add(exampleType{
 			Primary: randomString(12),
 			Index:   index,
-			Value:   i,
+			Value:   0,
 		})
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}
-		i++
-	}
 
-	max := 5
-	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
+		objects, err = tx.GetIndex("Index", index, &ds.GetOptions{Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
 
-	returned := len(objects)
-	if returned != max {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
-	}
-
-	table.DeleteAll()
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   index,
-		Value:   0,
+		returned = len(objects)
+		if returned != 1 {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
-
-	objects, err = table.GetIndex("Index", index, &ds.GetOptions{Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
-
-	returned = len(objects)
-	if returned != 1 {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
-	}
 }
 
 func TestGetAllMaximum(t *testing.T) {
@@ -678,50 +732,53 @@ func TestGetAllMaximum(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
+		}
+
+		max := 5
+		objects, err := tx.GetAll(&ds.GetOptions{Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
+
+		returned := len(objects)
+		if returned != max {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
+		}
+
+		tx.DeleteAll()
+		err = tx.Add(exampleType{
 			Primary: randomString(12),
 			Index:   index,
-			Value:   i,
+			Value:   0,
 		})
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}
-		i++
-	}
 
-	max := 5
-	objects, err := table.GetAll(&ds.GetOptions{Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
+		objects, err = tx.GetAll(&ds.GetOptions{Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
 
-	returned := len(objects)
-	if returned != max {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
-	}
-
-	table.DeleteAll()
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   index,
-		Value:   0,
+		returned = len(objects)
+		if returned != 1 {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
-
-	objects, err = table.GetAll(&ds.GetOptions{Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
-
-	returned = len(objects)
-	if returned != 1 {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
-	}
 }
 
 func TestGetIndexSortedMaximum(t *testing.T) {
@@ -739,50 +796,53 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
+		}
+
+		max := 5
+		objects, err := tx.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true, Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
+
+		returned := len(objects)
+		if returned != max {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
+		}
+
+		tx.DeleteAll()
+		err = tx.Add(exampleType{
 			Primary: randomString(12),
 			Index:   index,
-			Value:   i,
+			Value:   0,
 		})
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}
-		i++
-	}
 
-	max := 5
-	objects, err := table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true, Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
+		objects, err = tx.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true, Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
 
-	returned := len(objects)
-	if returned != max {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
-	}
-
-	table.DeleteAll()
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   index,
-		Value:   0,
+		returned = len(objects)
+		if returned != 1 {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
-
-	objects, err = table.GetIndex("Index", index, &ds.GetOptions{Sorted: true, Ascending: true, Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
-
-	returned = len(objects)
-	if returned != 1 {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
-	}
 }
 
 func TestGetAllSortedMaximum(t *testing.T) {
@@ -800,48 +860,51 @@ func TestGetAllSortedMaximum(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
-	count := 10
-	for i < count {
-		err = table.Add(exampleType{
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		count := 10
+		for i < count {
+			err = tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Value:   i,
+			})
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
+		}
+
+		max := 5
+		objects, err := tx.GetAll(&ds.GetOptions{Sorted: true, Ascending: true, Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
+
+		returned := len(objects)
+		if returned != max {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
+		}
+
+		tx.DeleteAll()
+		err = tx.Add(exampleType{
 			Primary: randomString(12),
 			Index:   index,
-			Value:   i,
+			Value:   0,
 		})
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}
-		i++
-	}
 
-	max := 5
-	objects, err := table.GetAll(&ds.GetOptions{Sorted: true, Ascending: true, Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
+		objects, err = tx.GetAll(&ds.GetOptions{Sorted: true, Ascending: true, Max: max})
+		if err != nil {
+			t.Errorf("Error getting many entires: %s", err.Error())
+		}
 
-	returned := len(objects)
-	if returned != max {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", max, returned)
-	}
-
-	table.DeleteAll()
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   index,
-		Value:   0,
+		returned = len(objects)
+		if returned != 1 {
+			t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
-
-	objects, err = table.GetAll(&ds.GetOptions{Sorted: true, Ascending: true, Max: max})
-	if err != nil {
-		t.Errorf("Error getting many entires: %s", err.Error())
-	}
-
-	returned = len(objects)
-	if returned != 1 {
-		t.Errorf("Returned number of entries was not correct. Expected %d got %d", 1, returned)
-	}
 }

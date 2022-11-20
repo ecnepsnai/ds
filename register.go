@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sync"
 
 	"github.com/ecnepsnai/logtic"
 	"go.etcd.io/bbolt"
@@ -33,6 +34,7 @@ func Register(o interface{}, filePath string, options *Options) (*Table, error) 
 		Name:   typeOf.Name(),
 		typeOf: typeOf,
 		log:    logtic.Log.Connect("ds(" + typeOf.Name() + ")"),
+		txLock: &sync.RWMutex{},
 	}
 	if options != nil {
 		table.options = *options

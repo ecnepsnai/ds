@@ -24,10 +24,12 @@ func TestAdd(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
@@ -52,10 +54,12 @@ func TestAddIndex(t *testing.T) {
 	index := randomString(12)
 	i := 0
 	for i < 10 {
-		err = table.Add(exampleType{
-			Primary: randomString(12),
-			Index:   index,
-			Unique:  randomString(12),
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			return tx.Add(exampleType{
+				Primary: randomString(12),
+				Index:   index,
+				Unique:  randomString(12),
+			})
 		})
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
@@ -83,8 +87,10 @@ func TestAddTypeMismatch(t *testing.T) {
 		Foo string `ds:"primary"`
 	}
 
-	err = table.Add(otherType{
-		Foo: randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(otherType{
+			Foo: randomString(12),
+		})
 	})
 	if err == nil {
 		t.Error("No error seen while attempting to insert incorrect object into table")
@@ -110,8 +116,10 @@ func TestAddPointer(t *testing.T) {
 		Foo string `ds:"primary"`
 	}
 
-	err = table.Add(&otherType{
-		Foo: randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(&otherType{
+			Foo: randomString(12),
+		})
 	})
 	if err == nil {
 		t.Error("No error seen while attempting to insert pointer into table")
@@ -135,19 +143,23 @@ func TestAddDuplicatePrimaryKey(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: primaryKey,
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: primaryKey,
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: primaryKey,
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: primaryKey,
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
 	})
 	if err == nil {
 		t.Errorf("No error seen while attempting to insert object with duplicate primary key")
@@ -171,19 +183,23 @@ func TestAddDuplicateUnique(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  unique,
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  unique,
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  unique,
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  unique,
+		})
 	})
 	if err == nil {
 		t.Errorf("No error seen while attempting to insert object with duplicate primary key")
@@ -207,9 +223,11 @@ func TestAddUnmatchedUnique(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Unique:  unique,
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: randomString(12),
+			Unique:  unique,
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
@@ -233,9 +251,11 @@ func TestAddUnmatchedUnique(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Unique:  unique,
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: randomString(12),
+			Unique:  unique,
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
@@ -253,23 +273,32 @@ func TestAddDifferentStruct(t *testing.T) {
 	}
 
 	// Change name of primary
-	if err := table.Add(struct {
-		Foo int `ds:"primary"`
-	}{Foo: 1}); err == nil {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(struct {
+			Foo int `ds:"primary"`
+		}{Foo: 1})
+	})
+	if err == nil {
 		t.Errorf("No error seen when adding different struct to table")
 	}
 
 	// Omit primary tag
-	if err := table.Add(struct {
-		Primary string
-	}{Primary: randomString(12)}); err == nil {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(struct {
+			Primary string
+		}{Primary: randomString(12)})
+	})
+	if err == nil {
 		t.Errorf("No error seen when adding different struct to table")
 	}
 
 	// Change type of primary
-	if err := table.Add(struct {
-		Primary int `ds:"primary"`
-	}{Primary: 1}); err == nil {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(struct {
+			Primary int `ds:"primary"`
+		}{Primary: 1})
+	})
+	if err == nil {
 		t.Errorf("No error seen when adding different struct to table")
 	}
 }
@@ -286,15 +315,18 @@ func TestAddBadStruct(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	if err := table.Add(struct {
-		Primary string
-		Index   string
-		Unique  string
-	}{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  randomString(12),
-	}); err == nil {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(struct {
+			Primary string
+			Index   string
+			Unique  string
+		}{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
+	})
+	if err == nil {
 		t.Errorf("No error seen when adding bad struct to table")
 	}
 }

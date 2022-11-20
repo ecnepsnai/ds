@@ -1,6 +1,34 @@
+# v1.8.0
+
+**This Release Contains Breaking Changes**
+
+- [**Breaking**] All table read/write operations are deprecated `Get()`, `GetIndex()`, `GetUnique()`, `GetAll()`, `Add()`, `Delete()`, `DeletePrimaryKey()`, `DeleteUnique()`, `DeleteAllIndex()`, `DeleteAll()`, `Update()`. Instead, you must use a read or write transaction: `table.StartRead()` or `table.StartWrite()`. The deprecated methods will be removed in the next major release.
+
+    This change, while large, enables applications to have proper read/write safety across threads. Prior to this, applications would have to manage thread safety themselves.
+
+    For example, the following code:
+
+    ```go
+    object, err := table.Get("example")
+    ```
+
+    Becomes:
+
+    ```go
+    var object []byte
+    err := table.StartRead(func(tx ds.IReadTransaction) error {
+        obj, err := tx.Get("example")
+        if err != nil {
+            return err
+        }
+        object = obj
+        return nil
+    })
+    ```
+
 # v1.7.0
 
-**This Release Contains Breaking changes**
+**This Release Contains Breaking Changes**
 
 - [**Breaking**] Errors have been made into constant objects. Some errors have changed. If your application relies on checking for specific errors from ds then you will need to update those checks to use `ds.Err*` constants.
 

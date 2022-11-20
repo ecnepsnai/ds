@@ -264,14 +264,17 @@ func TestRegisterChangeOptions(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: primaryKey,
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = tx.Add(exampleType{
+			Primary: primaryKey,
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
 
 	table.Close()
 	table = nil

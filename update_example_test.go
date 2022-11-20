@@ -18,14 +18,21 @@ func ExampleTable_Update() {
 		Email:    "email@domain",
 		Enabled:  true,
 	}
-	if err := table.Add(newUser); err != nil {
+
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(newUser)
+	})
+	if err != nil {
 		panic(err)
 	}
 
 	newUser.Password = "something else"
 
 	// Update an existing entry (based on the primary key)
-	if err := table.Update(newUser); err != nil {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Update(newUser)
+	})
+	if err != nil {
 		panic(err)
 	}
 }

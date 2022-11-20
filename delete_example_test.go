@@ -2,7 +2,7 @@ package ds_test
 
 import "github.com/ecnepsnai/ds"
 
-func ExampleTable_Delete() {
+func ExampleIReadWriteTransaction_Delete() {
 	type User struct {
 		Username string `ds:"primary"`
 		Password string
@@ -20,43 +20,59 @@ func ExampleTable_Delete() {
 	}
 
 	// Delete the object
-	if err := table.Delete(deleteUser); err != nil {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Delete(deleteUser)
+	})
+
+	if err != nil {
 		panic(err)
 	}
 }
 
-func ExampleTable_DeletePrimaryKey() {
+func ExampleIReadWriteTransaction_DeletePrimaryKey() {
 	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
 
 	// Delete an object by its primary key
-	if err := table.DeletePrimaryKey("ian"); err != nil {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.DeletePrimaryKey("ian")
+	})
+	if err != nil {
 		panic(err)
 	}
 }
 
-func ExampleTable_DeleteUnique() {
+func ExampleIReadWriteTransaction_DeleteUnique() {
 	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
 
 	// Delete an object by a unique fields value
-	if err := table.DeleteUnique("Email", "user@domain"); err != nil {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.DeleteUnique("Email", "user@domain")
+	})
+	if err != nil {
 		panic(err)
 	}
 }
 
-func ExampleTable_DeleteAllIndex() {
+func ExampleIReadWriteTransaction_DeleteAllIndex() {
 	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
 
 	// Delete all objects with the following indexed fields value
-	if err := table.DeleteAllIndex("Enabled", false); err != nil {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.DeleteAllIndex("Enabled", false)
+	})
+	if err != nil {
 		panic(err)
 	}
 }
 
-func ExampleTable_DeleteAll() {
+func ExampleIReadWriteTransaction_DeleteAll() {
 	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
 
 	// Delete all objects
-	if err := table.DeleteAll(); err != nil {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.DeleteAll()
+	})
+	if err != nil {
 		panic(err)
 	}
 }

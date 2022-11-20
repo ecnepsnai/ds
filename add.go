@@ -9,7 +9,13 @@ import (
 )
 
 // Add will add a new object to the table. o must the the same type that was used to register the table and cannot be a pointer.
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) Add(o interface{}) error {
+	return table.add(o)
+}
+
+func (table *Table) add(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
@@ -22,7 +28,7 @@ func (table *Table) Add(o interface{}) error {
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
 		table.log.Debug("Adding value to table")
-		return table.add(tx, o)
+		return table.addObject(tx, o)
 	})
 	if err != nil {
 		return err
@@ -134,7 +140,7 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 	return nil
 }
 
-func (table *Table) add(tx *bbolt.Tx, o interface{}) error {
+func (table *Table) addObject(tx *bbolt.Tx, o interface{}) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())

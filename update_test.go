@@ -23,51 +23,54 @@ func TestUpdateExistingValue(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	count := 5
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		count := 5
 
-	i := 0
-	for i < count {
-		object := exampleType{
-			Primary: fmt.Sprintf("%d", i),
-			Index:   i,
-			Unique:  randomString(12),
+		i := 0
+		for i < count {
+			object := exampleType{
+				Primary: fmt.Sprintf("%d", i),
+				Index:   i,
+				Unique:  randomString(12),
+			}
+
+			err = tx.Add(object)
+			if err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
 
-		err = table.Add(object)
+		i = count - 1
+		for i >= 0 {
+			if err := tx.Update(exampleType{
+				Primary: fmt.Sprintf("%d", i),
+				Index:   i,
+				Unique:  randomString(12),
+			}); err != nil {
+				t.Errorf("Error updating existing value: %s", err.Error())
+			}
+			i--
+		}
+
+		objects, err := tx.GetAll(&ds.GetOptions{
+			Sorted: true,
+		})
 		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+			t.Errorf("Error getting all values from table: %s", err.Error())
 		}
-		i++
-	}
-
-	i = count - 1
-	for i >= 0 {
-		if err := table.Update(exampleType{
-			Primary: fmt.Sprintf("%d", i),
-			Index:   i,
-			Unique:  randomString(12),
-		}); err != nil {
-			t.Errorf("Error updating existing value: %s", err.Error())
+		results := make([]exampleType, len(objects))
+		for i, obj := range objects {
+			results[i] = obj.(exampleType)
 		}
-		i--
-	}
 
-	objects, err := table.GetAll(&ds.GetOptions{
-		Sorted: true,
+		for i, result := range results {
+			if result.Index != i {
+				t.Errorf("Incorrect index of updated object. Expected %d got %d", i, result.Index)
+			}
+		}
+		return nil
 	})
-	if err != nil {
-		t.Errorf("Error getting all values from table: %s", err.Error())
-	}
-	results := make([]exampleType, len(objects))
-	for i, obj := range objects {
-		results[i] = obj.(exampleType)
-	}
-
-	for i, result := range results {
-		if result.Index != i {
-			t.Errorf("Incorrect index of updated object. Expected %d got %d", i, result.Index)
-		}
-	}
 }
 
 // Test that a new entry will still be added with an update
@@ -85,16 +88,19 @@ func TestUpdateNewValue(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	object := exampleType{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  randomString(12),
-	}
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		object := exampleType{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		}
 
-	err = table.Update(object)
-	if err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
+		err = tx.Update(object)
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		return nil
+	})
 }
 
 // Test that many new entries will still be added with an update
@@ -110,25 +116,28 @@ func TestUpdateManyNewValue(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	expected := 10
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		expected := 10
 
-	i := 0
-	for i < expected {
-		if err := table.Update(exampleType{i}); err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+		i := 0
+		for i < expected {
+			if err := tx.Update(exampleType{i}); err != nil {
+				t.Errorf("Error adding value to table: %s", err.Error())
+			}
+			i++
 		}
-		i++
-	}
 
-	objs, err := table.GetAll(&ds.GetOptions{Sorted: true})
-	if err != nil {
-		t.Errorf("Error getting all from table: %s", err.Error())
-	}
+		objs, err := tx.GetAll(&ds.GetOptions{Sorted: true})
+		if err != nil {
+			t.Errorf("Error getting all from table: %s", err.Error())
+		}
 
-	result := len(objs)
-	if result != expected {
-		t.Errorf("Unexpected length. Expected %d got %d", expected, result)
-	}
+		result := len(objs)
+		if result != expected {
+			t.Errorf("Unexpected length. Expected %d got %d", expected, result)
+		}
+		return nil
+	})
 }
 
 func TestUpdatePointer(t *testing.T) {
@@ -143,12 +152,15 @@ func TestUpdatePointer(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	if err := table.Add(exampleType{1}); err != nil {
-		t.Errorf("Error adding value to table: %s", err.Error())
-	}
+	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		if err := tx.Add(exampleType{1}); err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
 
-	err = table.Update(&exampleType{1})
-	if err == nil {
-		t.Errorf("No error seen when one expected when updating pointer")
-	}
+		err = tx.Update(&exampleType{1})
+		if err == nil {
+			t.Errorf("No error seen when one expected when updating pointer")
+		}
+		return nil
+	})
 }

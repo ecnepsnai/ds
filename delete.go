@@ -10,7 +10,13 @@ import (
 )
 
 // Delete will delete the provided object and clean indexes
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) Delete(o interface{}) error {
+	return table.delete(o)
+}
+
+func (table *Table) delete(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 
 	if typeOf.Kind() == reflect.Ptr {
@@ -22,7 +28,7 @@ func (table *Table) Delete(o interface{}) error {
 	}
 
 	err := table.data.Update(func(tx *bbolt.Tx) error {
-		return table.delete(tx, o)
+		return table.deleteObject(tx, o)
 	})
 	if err != nil {
 		return err
@@ -33,7 +39,13 @@ func (table *Table) Delete(o interface{}) error {
 
 // DeletePrimaryKey will delete the object with the associated primary key and clean indexes. Does nothing if not object
 // matches the given primary key.
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) DeletePrimaryKey(o interface{}) error {
+	return table.deletePrimaryKey(o)
+}
+
+func (table *Table) deletePrimaryKey(o interface{}) error {
 	object, err := table.Get(o)
 	if err != nil {
 		return err
@@ -46,7 +58,13 @@ func (table *Table) DeletePrimaryKey(o interface{}) error {
 
 // DeleteUnique will delete the object with the associated unique value and clean indexes. Does nothing if no object
 // matched the given unique fields value.
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) DeleteUnique(field string, o interface{}) error {
+	return table.deleteUnique(field, o)
+}
+
+func (table *Table) deleteUnique(field string, o interface{}) error {
 	object, err := table.GetUnique(field, o)
 	if err != nil {
 		return err
@@ -57,7 +75,7 @@ func (table *Table) DeleteUnique(field string, o interface{}) error {
 	return table.Delete(object)
 }
 
-func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
+func (table *Table) deleteObject(tx *bbolt.Tx, o interface{}) error {
 	primaryKeyBytes, err := table.primaryKeyBytes(o)
 	if err != nil {
 		return err
@@ -180,7 +198,13 @@ func (table *Table) delete(tx *bbolt.Tx, o interface{}) error {
 }
 
 // DeleteAllIndex will delete all objects matching the given indexed fields value
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) DeleteAllIndex(fieldName string, value interface{}) error {
+	return table.deleteAllIndex(fieldName, value)
+}
+
+func (table *Table) deleteAllIndex(fieldName string, value interface{}) error {
 	objects, err := table.GetIndex(fieldName, value, nil)
 	if err != nil {
 		return err
@@ -195,7 +219,13 @@ func (table *Table) DeleteAllIndex(fieldName string, value interface{}) error {
 }
 
 // DeleteAll delete all objects from the table
+//
+// Deprecated: use a ReadWrite transaction instead.
 func (table *Table) DeleteAll() error {
+	return table.deleteAll()
+}
+
+func (table *Table) deleteAll() error {
 	return table.data.Update(func(tx *bbolt.Tx) error {
 		if err := table.purgeBucket(tx, dataKey); err != nil {
 			return err
