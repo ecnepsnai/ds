@@ -1,3 +1,7 @@
+# v1.8.1
+
+- Removed deprecated methods
+
 # v1.8.0
 
 **This Release Contains Breaking Changes**

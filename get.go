@@ -18,13 +18,6 @@ type GetOptions struct {
 	Max int
 }
 
-// Get will get a single entry by its primary key. Returns (nil, nil) if nothing found.
-//
-// Deprecated: use a Read transaction instead
-func (table *Table) Get(primaryKey interface{}) (interface{}, error) {
-	return table.get(primaryKey)
-}
-
 func (table *Table) get(primaryKey interface{}) (interface{}, error) {
 	if primaryKey == nil {
 		return nil, nil
@@ -60,15 +53,6 @@ func (table *Table) getPrimaryKey(key []byte) (interface{}, error) {
 	}
 
 	return value.Interface(), nil
-}
-
-// GetIndex will get multiple entries that contain the same value for the specified indexed field.
-// Result is not ordered. Use GetIndexSorted to return a sorted slice.
-// Returns an empty array if nothing found.
-//
-// Deprecated: use a Read transaction instead
-func (table *Table) GetIndex(fieldName string, value interface{}, options *GetOptions) ([]interface{}, error) {
-	return table.getIndex(fieldName, value, options)
 }
 
 func (table *Table) getIndex(fieldName string, value interface{}, options *GetOptions) ([]interface{}, error) {
@@ -207,14 +191,6 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]interfa
 	return sortedObject, nil
 }
 
-// GetUnique will get a single entry based on the value of the provided unique field.
-// Returns (nil, nil) if nothing found.
-//
-// Deprecated: use a Read transaction instead
-func (table *Table) GetUnique(fieldName string, value interface{}) (interface{}, error) {
-	return table.getUnique(fieldName, value)
-}
-
 func (table *Table) getUnique(fieldName string, value interface{}) (interface{}, error) {
 	if !table.IsUnique(fieldName) {
 		table.log.Error("Field '%s' is not unique", fieldName)
@@ -242,13 +218,6 @@ func (table *Table) getUnique(fieldName string, value interface{}) (interface{},
 	}
 
 	return table.getPrimaryKey(primaryKeyData)
-}
-
-// GetAll will get all of the entries in the table.
-//
-// Deprecated: use a Read transaction instead
-func (table *Table) GetAll(options *GetOptions) ([]interface{}, error) {
-	return table.getAll(options)
 }
 
 func (table *Table) getAll(options *GetOptions) ([]interface{}, error) {

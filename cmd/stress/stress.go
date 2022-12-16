@@ -128,7 +128,10 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				},
 			}
 			lastInserted = &o
-			if err := table.Add(o); err != nil {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+				return tx.Add(o)
+			})
+			if err != nil {
 				panic(fmt.Sprintf("Error adding value to table: %s", err.Error()))
 			}
 		} else if action == 2 {
@@ -137,8 +140,11 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				continue
 			}
 
-			if err := table.Delete(*lastInserted); err != nil {
-				panic(fmt.Sprintf("Error deleting value to table: %s", err.Error()))
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+				return tx.Delete(*lastInserted)
+			})
+			if err != nil {
+				panic(fmt.Sprintf("Error adding value to table: %s", err.Error()))
 			}
 			lastInserted = nil
 		} else if action == 3 {
@@ -157,7 +163,10 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				},
 			}
 			lastInserted = &o
-			if err := table.Add(o); err != nil {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+				return tx.Add(o)
+			})
+			if err != nil {
 				panic(fmt.Sprintf("Error adding value to table: %s", err.Error()))
 			}
 		} else if action == 4 {
@@ -167,7 +176,10 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 			}
 
 			lastInserted.Unique = randomString(258)
-			if err := table.Update(*lastInserted); err != nil {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+				return tx.Update(*lastInserted)
+			})
+			if err != nil {
 				panic(fmt.Sprintf("Error updating value to table: %s", err.Error()))
 			}
 		} else if action == 5 {
@@ -186,7 +198,10 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				},
 			}
 			lastInserted = &o
-			if err := table.Add(o); err != nil {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+				return tx.Add(o)
+			})
+			if err != nil {
 				panic(fmt.Sprintf("Error adding value to table: %s", err.Error()))
 			}
 		}

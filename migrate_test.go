@@ -29,18 +29,24 @@ func TestMigrate(t *testing.T) {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		i := 0
-		for i < count {
-			err = table.Add(user{
-				Username: randomString(24),
-				Email:    randomString(24),
-				Enabled:  true,
-				Password: randomString(24),
-			})
-			if err != nil {
-				t.Fatalf("Error adding value to table: %s", err.Error())
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			i := 0
+			for i < count {
+				err := tx.Add(user{
+					Username: randomString(24),
+					Email:    randomString(24),
+					Enabled:  true,
+					Password: randomString(24),
+				})
+				if err != nil {
+					return err
+				}
+				i++
 			}
-			i++
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error adding value to table: %s", err.Error())
 		}
 
 		table.Close()
@@ -111,24 +117,30 @@ func TestMigrateSkip(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	i := 0
 	count := 10
-	index := randomString(12)
-	for i < count {
-		err = table.Add(oldType{
-			Primary: randomString(12),
-			Index:   index,
-			Unique:  randomString(12),
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		i := 0
+		index := randomString(12)
+		for i < count {
+			err = tx.Add(oldType{
+				Primary: randomString(12),
+				Index:   index,
+				Unique:  randomString(12),
+			})
+			if err != nil {
+				return err
+			}
+			i++
 		}
-		i++
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
 	table.Close()
 
-	i = 0
+	i := 0
 	stats := ds.Migrate(ds.MigrateParams{
 		TablePath: tablePath,
 		OldType:   oldType{},
@@ -186,17 +198,23 @@ func TestMigrateFail(t *testing.T) {
 
 	i := 0
 	count := 10
-	index := randomString(12)
-	for i < count {
-		err = table.Add(oldType{
-			Primary: randomString(12),
-			Index:   index,
-			Unique:  randomString(12),
-		})
-		if err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		index := randomString(12)
+		for i < count {
+			err = tx.Add(oldType{
+				Primary: randomString(12),
+				Index:   index,
+				Unique:  randomString(12),
+			})
+			if err != nil {
+				return err
+			}
+			i++
 		}
-		i++
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Error adding value to table: %s", err.Error())
 	}
 
 	table.Close()
@@ -244,10 +262,12 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: randomString(12),
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: randomString(12),
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
@@ -386,15 +406,21 @@ func TestMigrateSorted(t *testing.T) {
 		table := registerTable(originalUser{})
 
 		i := 0
-		for i < count {
-			err := table.Add(originalUser{
-				ID:     i,
-				Value1: randomString(12),
-			})
-			if err != nil {
-				t.Fatalf("Error adding value to table: %s", err.Error())
+		err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			for i < count {
+				err := tx.Add(originalUser{
+					ID:     i,
+					Value1: randomString(12),
+				})
+				if err != nil {
+					return err
+				}
+				i++
 			}
-			i++
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error adding value to table: %s", err.Error())
 		}
 
 		table.Close()
@@ -433,8 +459,13 @@ func TestMigrateSorted(t *testing.T) {
 	table := registerTable(newUser{})
 	defer table.Close()
 
-	objects, err := table.GetAll(&ds.GetOptions{
-		Sorted: true,
+	var objects []interface{}
+	var err error
+	err = table.StartRead(func(tx ds.IReadTransaction) error {
+		objects, err = tx.GetAll(&ds.GetOptions{
+			Sorted: true,
+		})
+		return err
 	})
 	if err != nil {
 		t.Errorf("Error getting all objects from table: %s", err.Error())

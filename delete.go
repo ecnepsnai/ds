@@ -9,13 +9,6 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-// Delete will delete the provided object and clean indexes
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) Delete(o interface{}) error {
-	return table.delete(o)
-}
-
 func (table *Table) delete(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 
@@ -37,42 +30,26 @@ func (table *Table) delete(o interface{}) error {
 	return nil
 }
 
-// DeletePrimaryKey will delete the object with the associated primary key and clean indexes. Does nothing if not object
-// matches the given primary key.
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) DeletePrimaryKey(o interface{}) error {
-	return table.deletePrimaryKey(o)
-}
-
 func (table *Table) deletePrimaryKey(o interface{}) error {
-	object, err := table.Get(o)
+	object, err := table.get(o)
 	if err != nil {
 		return err
 	}
 	if object == nil {
 		return nil
 	}
-	return table.Delete(object)
-}
-
-// DeleteUnique will delete the object with the associated unique value and clean indexes. Does nothing if no object
-// matched the given unique fields value.
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) DeleteUnique(field string, o interface{}) error {
-	return table.deleteUnique(field, o)
+	return table.delete(object)
 }
 
 func (table *Table) deleteUnique(field string, o interface{}) error {
-	object, err := table.GetUnique(field, o)
+	object, err := table.getUnique(field, o)
 	if err != nil {
 		return err
 	}
 	if object == nil {
 		return nil
 	}
-	return table.Delete(object)
+	return table.delete(object)
 }
 
 func (table *Table) deleteObject(tx *bbolt.Tx, o interface{}) error {
@@ -197,32 +174,18 @@ func (table *Table) deleteObject(tx *bbolt.Tx, o interface{}) error {
 	return nil
 }
 
-// DeleteAllIndex will delete all objects matching the given indexed fields value
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) DeleteAllIndex(fieldName string, value interface{}) error {
-	return table.deleteAllIndex(fieldName, value)
-}
-
 func (table *Table) deleteAllIndex(fieldName string, value interface{}) error {
-	objects, err := table.GetIndex(fieldName, value, nil)
+	objects, err := table.getIndex(fieldName, value, nil)
 	if err != nil {
 		return err
 	}
 	for _, object := range objects {
-		if err := table.Delete(object); err != nil {
+		if err := table.delete(object); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-// DeleteAll delete all objects from the table
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) DeleteAll() error {
-	return table.deleteAll()
 }
 
 func (table *Table) deleteAll() error {

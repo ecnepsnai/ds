@@ -156,10 +156,12 @@ func TestRegisterOpenClose(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: primaryKey,
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: primaryKey,
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
 	})
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
@@ -173,7 +175,11 @@ func TestRegisterOpenClose(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	v, err := table.Get(primaryKey)
+	var v interface{}
+	err = table.StartRead(func(tx ds.IReadTransaction) error {
+		v, err = tx.Get(primaryKey)
+		return err
+	})
 	if err != nil {
 		t.Errorf("Error getting object: %s", err.Error())
 	}
@@ -223,11 +229,14 @@ func TestRegisterWrongType(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.Add(exampleType{
-		Primary: primaryKey,
-		Index:   randomString(12),
-		Unique:  randomString(12),
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		return tx.Add(exampleType{
+			Primary: primaryKey,
+			Index:   randomString(12),
+			Unique:  randomString(12),
+		})
 	})
+
 	if err != nil {
 		t.Errorf("Error adding value to table: %s", err.Error())
 	}

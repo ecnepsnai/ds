@@ -136,7 +136,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	}
 	defer table.Close()
 
-	objects, err := oldTable.GetAll(&GetOptions{Sorted: true, Ascending: true})
+	objects, err := oldTable.getAll(&GetOptions{Sorted: true, Ascending: true})
 	if err != nil {
 		log.Error("Error getting all entires: %s", err.Error())
 		results.Success = false
@@ -160,7 +160,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 			i--
 			continue
 		}
-		if err := table.Add(newObject); err != nil {
+		if err := table.add(newObject); err != nil {
 			log.Error("Error adding new entry to table: %s", err.Error())
 			results.Success = false
 			results.Error = err

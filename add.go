@@ -8,13 +8,6 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-// Add will add a new object to the table. o must the the same type that was used to register the table and cannot be a pointer.
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) Add(o interface{}) error {
-	return table.add(o)
-}
-
 func (table *Table) add(o interface{}) error {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {

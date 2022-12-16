@@ -2,7 +2,7 @@ package ds_test
 
 import "github.com/ecnepsnai/ds"
 
-func ExampleTable_Update() {
+func ExampleIReadWriteTransaction_Update() {
 	type User struct {
 		Username string `ds:"primary"`
 		Password string

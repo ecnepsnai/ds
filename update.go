@@ -7,15 +7,6 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-// Update will update an existing object in the table. The primary key must match for this object
-// otherwise it will just be inserted as a new object. Updated objects do not change positions in a sorted
-// table.
-//
-// Deprecated: use a ReadWrite transaction instead.
-func (table *Table) Update(o interface{}) error {
-	return table.update(o)
-}
-
 func (table *Table) update(o interface{}) error {
 	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to update pointer from table")
