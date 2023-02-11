@@ -1,3 +1,7 @@
+# v1.8.2
+
+- Update dependencies
+
 # v1.8.1
 
 - Removed deprecated methods
