@@ -100,7 +100,7 @@ func (table *Table) initializeConfig(tx *bbolt.Tx, force bool) error {
 		if err != nil {
 			return err
 		}
-		if err := compareFields(table.getFields(), config.Fields); err != nil {
+		if err := compareFields(table.getFields(), config.Fields); err != nil && !force {
 			table.log.Error("%s", err.Error())
 			return err
 		}

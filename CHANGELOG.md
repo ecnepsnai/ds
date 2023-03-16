@@ -1,3 +1,7 @@
+# v1.8.3
+
+- Fixed bug where nested struct fields could not change properties during a migration
+
 # v1.8.2
 
 - Update dependencies

@@ -96,6 +96,117 @@ func TestMigrate(t *testing.T) {
 	}
 }
 
+// Test that a migration where a nested struct type changes succeeds
+func TestMigrateStruct(t *testing.T) {
+	t.Parallel()
+
+	count := 10
+
+	registerTable := func() string {
+		type identification struct {
+			Number int
+			Expiry string
+		}
+
+		type user struct {
+			Username       string `ds:"primary"`
+			Email          string `ds:"unique"`
+			Enabled        bool   `ds:"index"`
+			Password       string
+			Identification identification
+		}
+
+		tp := path.Join(t.TempDir(), randomString(12))
+		table, err := ds.Register(user{}, tp, nil)
+		if err != nil {
+			t.Fatalf("Error registering table: %s", err.Error())
+		}
+
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			i := 0
+			for i < count {
+				err := tx.Add(user{
+					Username: randomString(24),
+					Email:    randomString(24),
+					Enabled:  true,
+					Password: randomString(24),
+					Identification: identification{
+						Number: i,
+						Expiry: randomString(24),
+					},
+				})
+				if err != nil {
+					return err
+				}
+				i++
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error adding value to table: %s", err.Error())
+		}
+
+		table.Close()
+		return tp
+	}
+
+	tablePath := registerTable()
+
+	type oldIdentification struct {
+		Number int
+		Expiry string
+	}
+	type oldUser struct {
+		Username       string `ds:"primary"`
+		Email          string `ds:"unique"`
+		Enabled        bool   `ds:"index"`
+		Password       string
+		Identification oldIdentification
+	}
+	type newIdentification struct {
+		Number string
+		Expiry string
+	}
+	type newUser struct {
+		ID             string `ds:"primary"`
+		Username       string `ds:"unique"`
+		Email          string `ds:"unique"`
+		Enabled        bool   `ds:"index"`
+		Password       string
+		Identification newIdentification
+	}
+
+	stats := ds.Migrate(ds.MigrateParams{
+		TablePath: tablePath,
+		OldType:   oldUser{},
+		NewType:   newUser{},
+		NewPath:   tablePath,
+		MigrateObject: func(o interface{}) (interface{}, error) {
+			old := o.(oldUser)
+			return newUser{
+				ID:       randomString(24),
+				Username: old.Username,
+				Email:    old.Email,
+				Enabled:  old.Enabled,
+				Password: old.Password,
+				Identification: newIdentification{
+					Number: fmt.Sprintf("%d", old.Identification.Number),
+					Expiry: old.Identification.Expiry,
+				},
+			}, nil
+		},
+	})
+	if stats.Error != nil {
+		t.Errorf("Error migrating table: %s", stats.Error)
+	}
+	if !stats.Success {
+		t.Error("Migration not successful but error is nil")
+	}
+	if stats.EntriesMigrated != uint(count) {
+		t.Errorf("Not all entries migrated. Expected %d got %d", count, stats.EntriesMigrated)
+	}
+}
+
 // Test that entries can be skipped in a migration
 func TestMigrateSkip(t *testing.T) {
 	t.Parallel()
