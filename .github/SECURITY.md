@@ -1,12 +1,12 @@
 # Security Policy
 
-The developers of DS aim to make security a priority for the project. This document describes our policy for handling
-security vulnerabilities within the DS software.
+The developers of this package aim to make security a priority for the project. This document describes our policy for
+handling security vulnerabilities within the this package software.
 
 ## Supported Versions
 
-Only the most recent release of DS is supported. Older versions are not supported and may contain unfixed security
-vulnerabilities.
+Only the most recent release of this package is supported. Older versions are not supported and may contain unfixed
+security vulnerabilities.
 
 ## Reporting a Vulnerability
 
@@ -20,6 +20,6 @@ Please contact the lead developer, Ian Spence, using the Signal number available
 # Q & A
 
 **Do you offer any form of reward for identifying security issues?**
-We do not run a bug bounty program and do not offer monetary rewards. DS is an open source project with absolutely no
-budget. All expenses for the project are donated. We will provide credit to you (of a name of your choice and single
-link to a social media profile) in release notes for discovered issues.
+We do not run a bug bounty program and do not offer monetary rewards. this package is an open source project with
+absolutely no budget. All expenses for the project are donated. We will provide credit to you (of a name of your choice
+and single link to a social media profile) in release notes for discovered issues.
