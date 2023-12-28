@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/ecnepsnai/logtic v1.9.4
-	go.etcd.io/bbolt v1.3.7
+	go.etcd.io/bbolt v1.3.8
 )
 
-require golang.org/x/sys v0.12.0 // indirect
+require golang.org/x/sys v0.15.0 // indirect
