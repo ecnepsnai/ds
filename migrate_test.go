@@ -595,3 +595,82 @@ func TestMigrateSorted(t *testing.T) {
 		}
 	}
 }
+
+// Test that a migration suceeds when we add an indexed field
+func TestMigrateAddIndex(t *testing.T) {
+	t.Parallel()
+
+	count := 10
+
+	registerTable := func() string {
+		type user struct {
+			Username string `ds:"primary" json:"username"`
+			Email    string `json:"email"`
+			Enabled  bool   `ds:"index" json:"enabled"`
+			Password string `json:"-"`
+		}
+
+		tp := path.Join(t.TempDir(), randomString(12))
+		table, err := ds.Register(user{}, tp, nil)
+		if err != nil {
+			t.Fatalf("Error registering table: %s", err.Error())
+		}
+
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			i := 0
+			for i < count {
+				err := tx.Add(user{
+					Username: randomString(24),
+					Email:    randomString(24),
+					Enabled:  true,
+					Password: randomString(24),
+				})
+				if err != nil {
+					return err
+				}
+				i++
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Error adding value to table: %s", err.Error())
+		}
+
+		table.Close()
+		return tp
+	}
+
+	tablePath := registerTable()
+
+	type oldUser struct {
+		Username string `ds:"primary" json:"username"`
+		Email    string `json:"email"`
+		Enabled  bool   `ds:"index" json:"enabled"`
+		Password string `json:"-"`
+	}
+	type newUser struct {
+		Username string `ds:"primary" json:"username"`
+		Email    string `ds:"unique" json:"email"`
+		Enabled  bool   `ds:"index" json:"enabled"`
+		Password string `json:"-"`
+	}
+
+	stats := ds.Migrate(ds.MigrateParams{
+		TablePath: tablePath,
+		OldType:   oldUser{},
+		NewType:   newUser{},
+		NewPath:   tablePath,
+		MigrateObject: func(o interface{}) (interface{}, error) {
+			return newUser(o.(oldUser)), nil
+		},
+	})
+	if stats.Error != nil {
+		t.Errorf("Error migrating table: %s", stats.Error)
+	}
+	if !stats.Success {
+		t.Error("Migration not successful but error is nil")
+	}
+	if stats.EntriesMigrated != uint(count) {
+		t.Errorf("Not all entries migrated. Expected %d got %d", count, stats.EntriesMigrated)
+	}
+}

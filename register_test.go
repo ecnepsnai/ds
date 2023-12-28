@@ -392,7 +392,7 @@ func TestRegisterChangeTag(t *testing.T) {
 	}
 	table.Close()
 
-	// Change the type of Primary to an int
+	// Change the Index field from index to Unique
 	_, err = ds.Register(struct {
 		Primary string `ds:"primary"`
 		Index   string `ds:"unique"`
