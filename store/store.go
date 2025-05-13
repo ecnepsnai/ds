@@ -217,7 +217,7 @@ func (s *Store) BeginWrite(write func(tx *Tx) error) error {
 		}
 
 		if err := write(tx); err != nil {
-			s.log.PError("Transaction error, rolling back", map[string]interface{}{
+			s.log.PError("Transaction error, rolling back", map[string]any{
 				"error": err.Error(),
 			})
 			return err

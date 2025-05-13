@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func gobEncode(i interface{}) ([]byte, error) {
+func gobEncode(i any) ([]byte, error) {
 	if i == nil {
 		return nil, fmt.Errorf("gobEncode: nil value provided")
 	}

@@ -17,7 +17,7 @@ func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) *uint64 
 	return &index
 }
 
-func (table *Table) indexForObject(tx *bbolt.Tx, object interface{}) (*uint64, error) {
+func (table *Table) indexForObject(tx *bbolt.Tx, object any) (*uint64, error) {
 	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
 	pkBytes, err := gobEncode(pk)
 	if err != nil {

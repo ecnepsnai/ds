@@ -17,7 +17,7 @@ var currentDSSchemaVersion = 1
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
 // at the specified file path.
-func Register(o interface{}, filePath string, options *Options) (*Table, error) {
+func Register(o any, filePath string, options *Options) (*Table, error) {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		return nil, fmt.Errorf(ErrPointer)
@@ -140,7 +140,7 @@ func checkForExistingBoltTable(filePath string) error {
 	return nil
 }
 
-func registerGobType(o interface{}) {
+func registerGobType(o any) {
 	defer panicRecovery()
 	gob.Register(o)
 }

@@ -175,7 +175,7 @@ func TestRegisterOpenClose(t *testing.T) {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	var v interface{}
+	var v any
 	err = table.StartRead(func(tx ds.IReadTransaction) error {
 		v, err = tx.Get(primaryKey)
 		return err

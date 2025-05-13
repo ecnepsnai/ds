@@ -74,7 +74,7 @@ func TestMigrate(t *testing.T) {
 		OldType:   oldUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			old := o.(oldUser)
 			return newUser{
 				ID:       randomString(24),
@@ -181,7 +181,7 @@ func TestMigrateStruct(t *testing.T) {
 		OldType:   oldUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			old := o.(oldUser)
 			return newUser{
 				ID:       randomString(24),
@@ -257,7 +257,7 @@ func TestMigrateSkip(t *testing.T) {
 		OldType:   oldType{},
 		NewType:   newType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			old := o.(oldType)
 			if i%2 == 0 {
 				i++
@@ -336,7 +336,7 @@ func TestMigrateFail(t *testing.T) {
 		OldType:   oldType{},
 		NewType:   newType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			old := o.(oldType)
 			if i == count/2 {
 				return nil, fmt.Errorf("Fake error")
@@ -390,7 +390,7 @@ func TestMigrateParams(t *testing.T) {
 		OldType: exampleType{},
 		NewType: exampleType{},
 		NewPath: tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -403,7 +403,7 @@ func TestMigrateParams(t *testing.T) {
 		TablePath: tablePath,
 		NewType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -416,7 +416,7 @@ func TestMigrateParams(t *testing.T) {
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -430,7 +430,7 @@ func TestMigrateParams(t *testing.T) {
 		NewType:   &exampleType{},
 		OldType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -444,7 +444,7 @@ func TestMigrateParams(t *testing.T) {
 		NewType:   exampleType{},
 		OldType:   &exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -457,7 +457,7 @@ func TestMigrateParams(t *testing.T) {
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewType:   exampleType{},
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -483,7 +483,7 @@ func TestMigrateParams(t *testing.T) {
 		OldType:   exampleType{},
 		NewType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return nil, nil
 		},
 	})
@@ -504,7 +504,7 @@ func TestMigrateSorted(t *testing.T) {
 
 	count := 10
 
-	registerTable := func(tt interface{}) *ds.Table {
+	registerTable := func(tt any) *ds.Table {
 		table, err := ds.Register(tt, tablePath, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
@@ -549,7 +549,7 @@ func TestMigrateSorted(t *testing.T) {
 		OldType:   originalUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			old := o.(originalUser)
 			return newUser{
 				ID:     old.ID,
@@ -570,7 +570,7 @@ func TestMigrateSorted(t *testing.T) {
 	table := registerTable(newUser{})
 	defer table.Close()
 
-	var objects []interface{}
+	var objects []any
 	var err error
 	err = table.StartRead(func(tx ds.IReadTransaction) error {
 		objects, err = tx.GetAll(&ds.GetOptions{
@@ -660,7 +660,7 @@ func TestMigrateAddIndex(t *testing.T) {
 		OldType:   oldUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			return newUser(o.(oldUser)), nil
 		},
 	})

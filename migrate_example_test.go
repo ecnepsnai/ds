@@ -29,7 +29,7 @@ func ExampleMigrate() {
 		NewPath:   "/path/to/table.db", // You can specify the same path, or a new one if you want
 		OldType:   oldType{},
 		NewType:   newType{}, // NewType can be the same as the old type if you aren't changing the struct
-		MigrateObject: func(o interface{}) (interface{}, error) {
+		MigrateObject: func(o any) (any, error) {
 			old := o.(oldType)
 			// Within the MigrateObject function you can:
 			// 1. Return a object of the NewType (specified in the MigrateParams)

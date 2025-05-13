@@ -8,7 +8,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-func (table *Table) add(o interface{}) error {
+func (table *Table) add(o any) error {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
@@ -35,7 +35,7 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 		indexValue := valueOf.FieldByName(index)
 		indexValueBytes, err := gobEncode(indexValue.Interface())
 		if err != nil {
-			table.log.PError("Error encoding value for field", map[string]interface{}{
+			table.log.PError("Error encoding value for field", map[string]any{
 				"index": index,
 				"error": err.Error(),
 			})
@@ -49,7 +49,7 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 		if data := indexBucket.Get(indexValueBytes); data != nil {
 			pk, err := gobDecodePrimaryKeyList(data)
 			if err != nil {
-				table.log.PError("Error decoding primary key list for index", map[string]interface{}{
+				table.log.PError("Error decoding primary key list for index", map[string]any{
 					"index": index,
 					"error": err.Error(),
 				})
@@ -64,14 +64,14 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 		table.log.Debug("Updating index '%s'. Key count: %d", index, len(primaryKeys))
 		pkListBytes, err := gobEncode(primaryKeys)
 		if err != nil {
-			table.log.PError("Error encoding primary key list for index", map[string]interface{}{
+			table.log.PError("Error encoding primary key list for index", map[string]any{
 				"index": index,
 				"error": err.Error(),
 			})
 			return err
 		}
 		if err := indexBucket.Put(indexValueBytes, pkListBytes); err != nil {
-			table.log.PError("Error updating index", map[string]interface{}{
+			table.log.PError("Error updating index", map[string]any{
 				"index": index,
 				"error": err.Error(),
 			})
@@ -87,7 +87,7 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 		uniqueValue := valueOf.FieldByName(unique)
 		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
 		if err != nil {
-			table.log.PError("Error encoding value for field", map[string]interface{}{
+			table.log.PError("Error encoding value for field", map[string]any{
 				"field": unique,
 				"error": err.Error(),
 			})
@@ -101,28 +101,28 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 			// Check that if there is a duplicate unique value that it actually maps to data.
 			// If it doesn't, delete the unmatched value
 			if tx.Bucket(dataKey).Get(data) != nil {
-				table.log.PError("Duplicate value for unique field", map[string]interface{}{
+				table.log.PError("Duplicate value for unique field", map[string]any{
 					"field": unique,
 					"value": uniqueValueBytes,
 				})
 				return fmt.Errorf("%s: %s", ErrDuplicateUnique, unique)
 			} else {
 				if err := uniqueBucket.Delete(uniqueValueBytes); err != nil {
-					table.log.PError("Failed to correct unmatched unique value", map[string]interface{}{
+					table.log.PError("Failed to correct unmatched unique value", map[string]any{
 						"field": unique,
 						"value": uniqueValueBytes,
 						"error": err.Error(),
 					})
 					return err
 				}
-				table.log.PWarn("Corrected unmatched duplicate unique value", map[string]interface{}{
+				table.log.PWarn("Corrected unmatched duplicate unique value", map[string]any{
 					"field": unique,
 				})
 			}
 		}
 		table.log.Debug("Updating unique '%s'", unique)
 		if err := uniqueBucket.Put(uniqueValueBytes, primaryKeyBytes); err != nil {
-			table.log.PError("Error updating unique", map[string]interface{}{
+			table.log.PError("Error updating unique", map[string]any{
 				"field": unique,
 				"error": err.Error(),
 			})
@@ -133,7 +133,7 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 	return nil
 }
 
-func (table *Table) addObject(tx *bbolt.Tx, o interface{}) error {
+func (table *Table) addObject(tx *bbolt.Tx, o any) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
@@ -168,14 +168,14 @@ func (table *Table) addObject(tx *bbolt.Tx, o interface{}) error {
 
 		index := config.LastInsertIndex + 1
 		if err := table.setInsertIndexForObject(tx, valueOf, index); err != nil {
-			table.log.PError("Error updating insert index for entry", map[string]interface{}{
+			table.log.PError("Error updating insert index for entry", map[string]any{
 				"error": err.Error(),
 			})
 			return err
 		}
 		config.LastInsertIndex = index
 		if err := config.update(tx); err != nil {
-			table.log.PError("Error updating table config", map[string]interface{}{
+			table.log.PError("Error updating table config", map[string]any{
 				"error": err.Error(),
 			})
 			return err
@@ -183,7 +183,7 @@ func (table *Table) addObject(tx *bbolt.Tx, o interface{}) error {
 	}
 
 	if err := dataBucket.Put(primaryKeyBytes, data); err != nil {
-		table.log.PError("Error inserting new object", map[string]interface{}{
+		table.log.PError("Error inserting new object", map[string]any{
 			"error": err.Error(),
 		})
 		return err

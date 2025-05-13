@@ -16,17 +16,17 @@ type MigrateParams struct {
 	// NewPath the path for the new table file. This can be the same as the old table.
 	NewPath string
 	// OldType an instance of a struct object that has the same definition as the existing table.
-	OldType interface{}
+	OldType any
 	// NewType an instance of a struct object that has the definition that shall be used. This can be the same as the
 	// OldType.
-	NewType interface{}
+	NewType any
 	// DisableSorting (optional) if the current table is sorted, set this to true to disable sorting
 	// Note: This is irreversible!
 	DisableSorting bool
 	// MigrateObject method called for each entry in the table in reverse order. Return a new type, error, or nil.
 	// Migration is halted if an error is returned.
 	// Return (nil, nil) and the entry will be skipped from migration, but migration will continue.
-	MigrateObject func(o interface{}) (interface{}, error)
+	MigrateObject func(o any) (any, error)
 	// KeepBackup (optional) if false the backup copy of the table will be discarded if the migration was successful. If true
 	// the copy is not deleted.
 	KeepBackup bool
@@ -171,7 +171,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		i--
 	}
 
-	log.PInfo("Migration successful", map[string]interface{}{
+	log.PInfo("Migration successful", map[string]any{
 		"table_path":     params.TablePath,
 		"migrated_count": results.EntriesMigrated,
 		"skipped_count":  results.EntriesSkipped,
