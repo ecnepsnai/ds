@@ -10,16 +10,16 @@ import (
 
 // MigrateParams describes the parameters to perform a DS table migration.
 // All fields are required unless otherwise specified.
+//
+// OldType an instance of a struct object that has the same definition as the existing table.
+//
+// NewType an instance of a struct object that has the definition that shall be used. This can be the same as the
+// OldType.
 type MigrateParams[OldType any, NewType any] struct {
 	// TablePath the path to the existing table file
 	TablePath string
 	// NewPath the path for the new table file. This can be the same as the old table.
 	NewPath string
-	// OldType an instance of a struct object that has the same definition as the existing table.
-	OldType any
-	// NewType an instance of a struct object that has the definition that shall be used. This can be the same as the
-	// OldType.
-	NewType any
 	// DisableSorting (optional) if the current table is sorted, set this to true to disable sorting
 	// Note: This is irreversible!
 	DisableSorting bool
@@ -33,25 +33,22 @@ type MigrateParams[OldType any, NewType any] struct {
 }
 
 func (params MigrateParams[OldType, NewType]) validate() error {
+	var oldT OldType
+	var newT NewType
+
 	if _, err := os.Stat(params.TablePath); err != nil {
 		return fmt.Errorf("%s: %s", ErrMigrateTablePathNotFound, err.Error())
 	}
 	if params.NewPath == "" {
 		return fmt.Errorf("%s: NewPath", ErrMissingRequiredValue)
 	}
-	if params.OldType == nil {
-		return fmt.Errorf("%s: OldType", ErrMissingRequiredValue)
-	}
-	if params.NewType == nil {
-		return fmt.Errorf("%s: NewType", ErrMissingRequiredValue)
-	}
 	if params.MigrateObject == nil {
 		return fmt.Errorf("%s: MigrateObject", ErrMissingRequiredValue)
 	}
-	if typeOf := reflect.TypeOf(params.NewType); typeOf.Kind() == reflect.Ptr {
+	if typeOf := reflect.TypeOf(oldT); typeOf.Kind() == reflect.Ptr {
 		return fmt.Errorf("%s: NewType", ErrPointer)
 	}
-	if typeOf := reflect.TypeOf(params.OldType); typeOf.Kind() == reflect.Ptr {
+	if typeOf := reflect.TypeOf(newT); typeOf.Kind() == reflect.Ptr {
 		return fmt.Errorf("%s: OldType", ErrPointer)
 	}
 

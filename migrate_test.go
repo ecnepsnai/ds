@@ -71,8 +71,6 @@ func TestMigrate(t *testing.T) {
 
 	stats := ds.Migrate(ds.MigrateParams[oldUser, newUser]{
 		TablePath: tablePath,
-		OldType:   oldUser{},
-		NewType:   newUser{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *oldUser) (*newUser, error) {
 			return &newUser{
@@ -177,8 +175,6 @@ func TestMigrateStruct(t *testing.T) {
 
 	stats := ds.Migrate[oldUser, newUser](ds.MigrateParams[oldUser, newUser]{
 		TablePath: tablePath,
-		OldType:   oldUser{},
-		NewType:   newUser{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *oldUser) (*newUser, error) {
 			return &newUser{
@@ -252,8 +248,6 @@ func TestMigrateSkip(t *testing.T) {
 	i := 0
 	stats := ds.Migrate[oldType, newType](ds.MigrateParams[oldType, newType]{
 		TablePath: tablePath,
-		OldType:   oldType{},
-		NewType:   newType{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *oldType) (*newType, error) {
 			if i%2 == 0 {
@@ -330,8 +324,6 @@ func TestMigrateFail(t *testing.T) {
 	i = 0
 	stats := ds.Migrate[oldType, newType](ds.MigrateParams[oldType, newType]{
 		TablePath: tablePath,
-		OldType:   oldType{},
-		NewType:   newType{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *oldType) (*newType, error) {
 			if i == count/2 {
@@ -383,35 +375,7 @@ func TestMigrateParams(t *testing.T) {
 
 	// Missing table path
 	stats := ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
-		OldType: exampleType{},
-		NewType: exampleType{},
 		NewPath: tablePath,
-		MigrateObject: func(old *exampleType) (*exampleType, error) {
-			return nil, nil
-		},
-	})
-	if stats.Error == nil {
-		t.Errorf("No error seen for invalid migration request")
-	}
-
-	// Missing old type
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
-		TablePath: tablePath,
-		NewType:   exampleType{},
-		NewPath:   tablePath,
-		MigrateObject: func(old *exampleType) (*exampleType, error) {
-			return nil, nil
-		},
-	})
-	if stats.Error == nil {
-		t.Errorf("No error seen for invalid migration request")
-	}
-
-	// Missing new type
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
-		TablePath: tablePath,
-		OldType:   exampleType{},
-		NewPath:   tablePath,
 		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
@@ -423,8 +387,6 @@ func TestMigrateParams(t *testing.T) {
 	// New type is pointer
 	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
-		NewType:   &exampleType{},
-		OldType:   exampleType{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
@@ -437,8 +399,6 @@ func TestMigrateParams(t *testing.T) {
 	// Old type is pointer
 	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
-		NewType:   exampleType{},
-		OldType:   &exampleType{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
@@ -451,8 +411,6 @@ func TestMigrateParams(t *testing.T) {
 	// Missing new path
 	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
-		OldType:   exampleType{},
-		NewType:   exampleType{},
 		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
@@ -465,8 +423,6 @@ func TestMigrateParams(t *testing.T) {
 	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewPath:   tablePath,
-		OldType:   exampleType{},
-		NewType:   exampleType{},
 	})
 	if stats.Error == nil {
 		t.Errorf("No error seen for invalid migration request")
@@ -476,8 +432,6 @@ func TestMigrateParams(t *testing.T) {
 	os.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
 	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
-		OldType:   exampleType{},
-		NewType:   exampleType{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
@@ -550,8 +504,6 @@ func TestMigrateSorted(t *testing.T) {
 
 	stats := ds.Migrate(ds.MigrateParams[originalUser, newUser]{
 		TablePath: tablePath,
-		OldType:   originalUser{},
-		NewType:   newUser{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *originalUser) (*newUser, error) {
 			return &newUser{
@@ -656,8 +608,6 @@ func TestMigrateAddIndex(t *testing.T) {
 
 	stats := ds.Migrate(ds.MigrateParams[oldUser, newUser]{
 		TablePath: tablePath,
-		OldType:   oldUser{},
-		NewType:   newUser{},
 		NewPath:   tablePath,
 		MigrateObject: func(old *oldUser) (*newUser, error) {
 			return &newUser{

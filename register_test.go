@@ -72,6 +72,7 @@ func TestRegisterMultipleOfSameType(t *testing.T) {
 func TestRegisterNoExportedFields(t *testing.T) {
 	t.Parallel()
 
+	//lint:ignore U1000 testing only
 	type exampleType struct {
 		primary string `ds:"primary"`
 		index   string `ds:"index"`

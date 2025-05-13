@@ -1,3 +1,154 @@
+# v2.0.0
+
+**This Release Contains Major Breaking Changes to the DS API**
+
+- [**Breaking**] The DS API has been rewritten to make full use of generics.
+
+    This change, while large, greatly simplified the DS API and shifts a number of potential errors to compile-time away from runtime, greatly simplifying error handling and reducing the oppertunity for mistakes.
+
+    ## Register
+
+    ### Before
+
+    ```go
+    type User struct{
+        Username string `ds:"primary"`
+    }
+    table, err := ds.Register(User{}, "users.db", nil)
+    ```
+
+    ### After
+
+    ```go
+    type User struct{
+        Username string `ds:"primary"`
+    }
+    table, err := ds.Register[User]("users.db", nil)
+    ```
+
+    ## Add / Update / Delete
+
+    ### Before
+
+    Previously, passing a pointer to `Add`, `Update`, or `Delete` would result in an error being returned.
+
+    ```go
+    user := &User{
+        Username: "example"
+    }
+
+    // Returns err: pointer provided when none expected
+    err := table.Add(user)
+    ```
+
+    ### After
+
+    Now, because of generics, passing the wrong type produces a syntax error at compile time.
+
+    ```go
+    user := &User{
+        Username: "example"
+    }
+
+    // Syntax error: cannot use &User{…} (value of type *User) as User value in argument to tx.Add
+    err := table.Add(user)
+    ```
+
+    ## GetAll / GetIndex
+
+    ### Before
+
+    Previously, any read operation that returned a slice of objects, would return a slice of `interface{}` that could be casted to your desired object.
+
+    ```go
+    var users []User
+    table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
+        objects, err = tx.GetAll(nil)
+        if err != nil {
+            return err
+        }
+        users = make([]User, len(objects))
+        for i, object := range objects {
+            user, ok := object.(User)
+            if !ok {
+                panic("bad type")
+            }
+            users[i] = user
+        }
+        return nil
+    })
+    ```
+
+    ### After
+
+    Now, thanks to generics, those read operations now return a slice of pointers for your objects.
+
+    ```go
+    var users []*User
+    table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
+        users, err = tx.GetAll(nil)
+        if err != nil {
+            return err
+        }
+        return nil
+    })
+    ```
+
+    ## Migrate
+
+    ### Before
+
+    Previously you had to cast the input (old) object in the migration function to your desired type. Returning the wrong type of object would fail the migration.
+
+    ```go
+    type oldUser struct {
+        Username string `ds:"primary"`
+    }
+    type newUser struct {
+        ID       string `ds:"primary"`
+        Username string `ds:"unique"`
+    }
+
+    stats := ds.Migrate(ds.MigrateParams{
+        TablePath: tablePath,
+        OldType:   oldUser{},
+        NewType:   newUser{},
+        NewPath:   tablePath,
+        MigrateObject: func(o interface{}) (interface{}, error) {
+            old := o.(oldUser)
+            return &newUser{
+                ID:       randomString(24),
+                Username: old.Username,
+            }, nil
+        },
+    })
+    ```
+
+    ### After
+
+    Now, because of generics, the migration function is called with your old-type object. Returning the wrong type of object isn't possible and would produce a syntax error while compiling.
+
+    ```go
+    type oldUser struct {
+        Username string `ds:"primary"`
+    }
+    type newUser struct {
+        ID       string `ds:"primary"`
+        Username string `ds:"unique"`
+    }
+
+    stats := ds.Migrate(ds.MigrateParams[oldUser, newUser]{
+        TablePath: tablePath,
+        NewPath:   tablePath,
+        MigrateObject: func(old *oldUser) (*newUser, error) {
+            return &newUser{
+                ID:       randomString(24),
+                Username: old.Username,
+            }, nil
+        },
+    })
+    ```
+
 # v1.8.3
 
 - Fixed bug where nested struct fields could not change properties during a migration
