@@ -114,7 +114,7 @@ func Migrate[OldType any, NewType any](params MigrateParams[OldType, NewType]) (
 	}
 	options.force = true
 
-	oldTable, err := Register[OldType](params.OldType, backupPath, options)
+	oldTable, err := Register[OldType](backupPath, options)
 	if err != nil {
 		log.Error("Error registering old table: %s", err.Error())
 		results.Success = false
@@ -127,7 +127,7 @@ func Migrate[OldType any, NewType any](params MigrateParams[OldType, NewType]) (
 		options.DisableSorting = true
 	}
 
-	table, err := Register[NewType](params.NewType, params.NewPath, options)
+	table, err := Register[NewType](params.NewPath, options)
 	if err != nil {
 		log.Error("Error registering new table: %s", err.Error())
 		results.Success = false

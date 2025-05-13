@@ -83,7 +83,7 @@ func main() {
 	tablePath := path.Join(workDir, randomString(6)+".db")
 	fmt.Printf("table_path='%s' threads=%d count=%d\n", tablePath, threads, count)
 
-	table, err := ds.Register[exampleType](exampleType{}, tablePath, nil)
+	table, err := ds.Register[exampleType](tablePath, nil)
 	if err != nil {
 		panic(fmt.Sprintf("Error registering table: %s", err.Error()))
 	}

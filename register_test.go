@@ -20,7 +20,7 @@ func TestRegister(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -33,7 +33,7 @@ func TestRegisterMultiplePrimaryKey(t *testing.T) {
 		Primary2 string `ds:"primary"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with multiple primary keys")
 	}
 }
@@ -46,7 +46,7 @@ func TestRegisterNoPrimaryKey(t *testing.T) {
 		Unique string `ds:"unique"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with no primary keys")
 	}
 }
@@ -60,11 +60,11 @@ func TestRegisterMultipleOfSameType(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -78,11 +78,7 @@ func TestRegisterNoExportedFields(t *testing.T) {
 		unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{
-		primary: randomString(6),
-		index:   randomString(6),
-		unique:  randomString(6),
-	}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -92,7 +88,7 @@ func TestRegisterNoFields(t *testing.T) {
 
 	type exampleType struct{}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with no fields")
 	}
 }
@@ -105,7 +101,7 @@ func TestRegisterOtherTags(t *testing.T) {
 		SomethingElse string `json:"something_else"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err != nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 }
@@ -119,24 +115,8 @@ func TestRegisterUnknownStructTag(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	if _, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
+	if _, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil); err == nil {
 		t.Errorf("No error seen while attempting to register type with unknown struct tag")
-	}
-}
-
-func TestRegisterPointer(t *testing.T) {
-	t.Parallel()
-
-	type exampleType struct {
-		Primary string `ds:"primary"`
-		Index   string `ds:"index"`
-		Unique  string `ds:"unique"`
-	}
-
-	object := exampleType{}
-
-	if _, err := ds.Register[exampleType](&object, path.Join(t.TempDir(), randomString(12)), nil); err == nil {
-		t.Errorf("No error seen while attempting to register pointer")
 	}
 }
 
@@ -151,7 +131,7 @@ func TestRegisterOpenClose(t *testing.T) {
 	}
 	dsPath := path.Join(t.TempDir(), randomString(12))
 
-	table, err := ds.Register[exampleType](exampleType{}, dsPath, nil)
+	table, err := ds.Register[exampleType](dsPath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -170,7 +150,7 @@ func TestRegisterOpenClose(t *testing.T) {
 	table.Close()
 	table = nil
 
-	table, err = ds.Register[exampleType](exampleType{}, dsPath, nil)
+	table, err = ds.Register[exampleType](dsPath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -207,7 +187,7 @@ func TestRegisterLockedFile(t *testing.T) {
 		Index   string `ds:"index"`
 		Unique  string `ds:"unique"`
 	}
-	if _, err := ds.Register[exampleType](exampleType{}, dsPath, nil); err == nil {
+	if _, err := ds.Register[exampleType](dsPath, nil); err == nil {
 		t.Errorf("No error seen while attempting to open file without permission")
 	}
 }
@@ -223,7 +203,7 @@ func TestRegisterWrongType(t *testing.T) {
 	}
 	dsPath := path.Join(t.TempDir(), randomString(12))
 
-	table, err := ds.Register[exampleType](exampleType{}, dsPath, nil)
+	table, err := ds.Register[exampleType](dsPath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -248,7 +228,7 @@ func TestRegisterWrongType(t *testing.T) {
 		Wicked    string `ds:"index"`
 	}
 
-	_, err = ds.Register[otherType](otherType{}, dsPath, nil)
+	_, err = ds.Register[otherType](dsPath, nil)
 	if err == nil {
 		t.Errorf("No error seen while registering table with wrong type")
 	}
@@ -265,7 +245,7 @@ func TestRegisterChangeOptions(t *testing.T) {
 	}
 	dsPath := path.Join(t.TempDir(), randomString(12))
 
-	table, err := ds.Register[exampleType](exampleType{}, dsPath, &ds.Options{
+	table, err := ds.Register[exampleType](dsPath, &ds.Options{
 		DisableSorting: true,
 	})
 	if err != nil {
@@ -287,7 +267,7 @@ func TestRegisterChangeOptions(t *testing.T) {
 	table.Close()
 	table = nil
 
-	_, err = ds.Register[exampleType](exampleType{}, dsPath, &ds.Options{
+	_, err = ds.Register[exampleType](dsPath, &ds.Options{
 		DisableSorting: false,
 	})
 	if err == nil {
@@ -322,7 +302,7 @@ func TestRegisterExistingBoltTable(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	_, err = ds.Register[exampleType](exampleType{}, dsPath, &ds.Options{
+	_, err = ds.Register[exampleType](dsPath, &ds.Options{
 		DisableSorting: true,
 	})
 	if err == nil {
@@ -343,14 +323,14 @@ func TestRegisterChangePrimaryKey(t *testing.T) {
 	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	// Register first table
-	table, err := ds.Register[firstType](firstType{}, tablePath, nil)
+	table, err := ds.Register[firstType](tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 	table.Close()
 
 	// Try to change the primary key
-	_, err = ds.Register[secondType](secondType{}, tablePath, nil)
+	_, err = ds.Register[secondType](tablePath, nil)
 	if err == nil {
 		t.Errorf("No error seen when one expected while changing the tables primary key")
 	}
@@ -369,14 +349,14 @@ func TestRegisterChangeField(t *testing.T) {
 	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	// Register first table
-	table, err := ds.Register[firstType](firstType{}, tablePath, nil)
+	table, err := ds.Register[firstType](tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 	table.Close()
 
 	// Change the type of Primary to an int
-	_, err = ds.Register[secondType](secondType{}, tablePath, nil)
+	_, err = ds.Register[secondType](tablePath, nil)
 	if err == nil {
 		t.Errorf("No error seen when one expected while changing a field type")
 	}
@@ -397,14 +377,14 @@ func TestRegisterChangeTag(t *testing.T) {
 	tablePath := path.Join(t.TempDir(), randomString(12))
 
 	// Register first table
-	table, err := ds.Register[firstType](firstType{}, tablePath, nil)
+	table, err := ds.Register[firstType](tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 	table.Close()
 
 	// Change the Index field from index to Unique
-	_, err = ds.Register[secondType](secondType{}, tablePath, nil)
+	_, err = ds.Register[secondType](tablePath, nil)
 	if err == nil {
 		t.Errorf("No error seen when one expected while changing a field tag")
 	}
@@ -464,7 +444,7 @@ func TestRegisterOldVersion(t *testing.T) {
 		Index   string `ds:"index"`
 	}
 
-	table, err := ds.Register[newVersionType](newVersionType{}, tablePath, nil)
+	table, err := ds.Register[newVersionType](tablePath, nil)
 	if err == nil {
 		t.Errorf("No error seen when trying to open table from newer version of DS")
 	}

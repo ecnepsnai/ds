@@ -18,7 +18,7 @@ func TestUpdateExistingValue(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -79,7 +79,7 @@ func TestUpdateNewValue(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -107,7 +107,7 @@ func TestUpdateManyNewValue(t *testing.T) {
 		Primary int `ds:"primary"`
 	}
 
-	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -143,7 +143,7 @@ func TestUpdatePointer(t *testing.T) {
 		Primary int `ds:"primary"`
 	}
 
-	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}

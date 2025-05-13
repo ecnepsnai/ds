@@ -18,7 +18,8 @@ var currentDSSchemaVersion = 1
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
 // at the specified file path.
-func Register[T any](o any, filePath string, options *Options) (*Table[T], error) {
+func Register[T any](filePath string, options *Options) (*Table[T], error) {
+	var o T
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		return nil, errors.New(ErrPointer)

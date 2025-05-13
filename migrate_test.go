@@ -16,7 +16,7 @@ func TestMigrate(t *testing.T) {
 	count := 10
 
 	registerTable := func() string {
-		type user struct {
+		type User struct {
 			Username string `ds:"primary"`
 			Email    string `ds:"unique"`
 			Enabled  bool   `ds:"index"`
@@ -24,15 +24,15 @@ func TestMigrate(t *testing.T) {
 		}
 
 		tp := path.Join(t.TempDir(), randomString(12))
-		table, err := ds.Register[user](user{}, tp, nil)
+		table, err := ds.Register[User](tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		err = table.StartWrite(func(tx ds.IReadWriteTransaction[user]) error {
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction[User]) error {
 			i := 0
 			for i < count {
-				err := tx.Add(user{
+				err := tx.Add(User{
 					Username: randomString(24),
 					Email:    randomString(24),
 					Enabled:  true,
@@ -107,7 +107,7 @@ func TestMigrateStruct(t *testing.T) {
 			Expiry string
 		}
 
-		type user struct {
+		type User struct {
 			Username       string `ds:"primary"`
 			Email          string `ds:"unique"`
 			Enabled        bool   `ds:"index"`
@@ -116,15 +116,15 @@ func TestMigrateStruct(t *testing.T) {
 		}
 
 		tp := path.Join(t.TempDir(), randomString(12))
-		table, err := ds.Register[user](user{}, tp, nil)
+		table, err := ds.Register[User](tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		err = table.StartWrite(func(tx ds.IReadWriteTransaction[user]) error {
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction[User]) error {
 			i := 0
 			for i < count {
-				err := tx.Add(user{
+				err := tx.Add(User{
 					Username: randomString(24),
 					Email:    randomString(24),
 					Enabled:  true,
@@ -221,7 +221,7 @@ func TestMigrateSkip(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register[oldType](oldType{}, tablePath, nil)
+	table, err := ds.Register[oldType](tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -299,7 +299,7 @@ func TestMigrateFail(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register[oldType](oldType{}, tablePath, nil)
+	table, err := ds.Register[oldType](tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -364,7 +364,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register[exampleType](exampleType{}, tablePath, nil)
+	table, err := ds.Register[exampleType](tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -505,7 +505,7 @@ func TestMigrateSorted(t *testing.T) {
 	count := 10
 
 	registerOriginalTable := func(tt any) *ds.Table[originalUser] {
-		table, err := ds.Register[originalUser](tt, tablePath, nil)
+		table, err := ds.Register[originalUser](tablePath, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
@@ -514,7 +514,7 @@ func TestMigrateSorted(t *testing.T) {
 	}
 
 	registerNewTable := func(tt any) *ds.Table[newUser] {
-		table, err := ds.Register[newUser](tt, tablePath, nil)
+		table, err := ds.Register[newUser](tablePath, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
@@ -602,7 +602,7 @@ func TestMigrateAddIndex(t *testing.T) {
 	count := 10
 
 	registerTable := func() string {
-		type user struct {
+		type User struct {
 			Username string `ds:"primary" json:"username"`
 			Email    string `json:"email"`
 			Enabled  bool   `ds:"index" json:"enabled"`
@@ -610,15 +610,15 @@ func TestMigrateAddIndex(t *testing.T) {
 		}
 
 		tp := path.Join(t.TempDir(), randomString(12))
-		table, err := ds.Register[user](user{}, tp, nil)
+		table, err := ds.Register[User](tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		err = table.StartWrite(func(tx ds.IReadWriteTransaction[user]) error {
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction[User]) error {
 			i := 0
 			for i < count {
-				err := tx.Add(user{
+				err := tx.Add(User{
 					Username: randomString(24),
 					Email:    randomString(24),
 					Enabled:  true,

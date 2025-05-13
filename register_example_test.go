@@ -19,7 +19,7 @@ func ExampleRegister() {
 
 	tablePath := "user.db"
 
-	table, err := ds.Register[User](User{}, tablePath, nil)
+	table, err := ds.Register[User](tablePath, nil)
 	if err != nil {
 		panic(err)
 	}
