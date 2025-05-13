@@ -2,6 +2,7 @@ package ds
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -12,7 +13,7 @@ func (table *Table) add(o any) error {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
-		return fmt.Errorf(ErrPointer)
+		return errors.New(ErrPointer)
 	}
 	if err := compareFields(table.getFields(), structFieldsToFields(allFields(typeOf))); err != nil {
 		table.log.Error("Incompatible object definition: %s", err.Error())
@@ -150,7 +151,7 @@ func (table *Table) addObject(tx *bbolt.Tx, o any) error {
 	dataBucket := tx.Bucket(dataKey)
 	if data := dataBucket.Get(primaryKeyBytes); data != nil {
 		table.log.Error("Duplicate primary key")
-		return fmt.Errorf(ErrDuplicatePrimaryKey)
+		return errors.New(ErrDuplicatePrimaryKey)
 	}
 
 	if err := table.addUpdateIndex(tx, valueOf, primaryKeyBytes); err != nil {
