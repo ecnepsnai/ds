@@ -135,28 +135,3 @@ func TestUpdateManyNewValue(t *testing.T) {
 		return nil
 	})
 }
-
-func TestUpdatePointer(t *testing.T) {
-	t.Parallel()
-
-	type exampleType struct {
-		Primary int `ds:"primary"`
-	}
-
-	table, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil)
-	if err != nil {
-		t.Errorf("Error registering table: %s", err.Error())
-	}
-
-	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
-		if err := tx.Add(exampleType{1}); err != nil {
-			t.Errorf("Error adding value to table: %s", err.Error())
-		}
-
-		err = tx.Update(&exampleType{1})
-		if err == nil {
-			t.Errorf("No error seen when one expected when updating pointer")
-		}
-		return nil
-	})
-}

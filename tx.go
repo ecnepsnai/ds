@@ -35,7 +35,7 @@ type IReadWriteTransaction[T any] interface {
 	// Update will update an existing object in the table. The primary key must match for this object
 	// otherwise it will just be inserted as a new object. Updated objects do not change positions in a sorted
 	// table.
-	Update(o any) error
+	Update(o T) error
 }
 
 type readTxImpl[T any] struct{ table *Table[T] }
@@ -121,6 +121,6 @@ func (tx readWriteTxImpl[T]) DeleteAll() error {
 	return tx.table.deleteAll()
 }
 
-func (tx readWriteTxImpl[T]) Update(o any) error {
+func (tx readWriteTxImpl[T]) Update(o T) error {
 	return tx.table.update(o)
 }
