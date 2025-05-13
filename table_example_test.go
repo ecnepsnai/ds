@@ -10,7 +10,7 @@ func ExampleTable_IsIndexed() {
 	}
 
 	tablePath := "user.db"
-	table, err := ds.Register(User{}, tablePath, nil)
+	table, err := ds.Register[User](User{}, tablePath, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +27,7 @@ func ExampleTable_IsUnique() {
 	}
 
 	tablePath := "user.db"
-	table, err := ds.Register(User{}, tablePath, nil)
+	table, err := ds.Register[User](User{}, tablePath, nil)
 	if err != nil {
 		panic(err)
 	}

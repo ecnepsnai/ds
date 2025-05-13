@@ -83,7 +83,7 @@ func main() {
 	tablePath := path.Join(workDir, randomString(6)+".db")
 	fmt.Printf("table_path='%s' threads=%d count=%d\n", tablePath, threads, count)
 
-	table, err := ds.Register(exampleType{}, tablePath, nil)
+	table, err := ds.Register[exampleType](exampleType{}, tablePath, nil)
 	if err != nil {
 		panic(fmt.Sprintf("Error registering table: %s", err.Error()))
 	}
@@ -102,7 +102,7 @@ func main() {
 	os.RemoveAll(tmp)
 }
 
-func stress(table *ds.Table, wg *sync.WaitGroup) {
+func stress(table *ds.Table[exampleType], wg *sync.WaitGroup) {
 	defer wg.Done()
 	i := 0
 
@@ -128,7 +128,7 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				},
 			}
 			lastInserted = &o
-			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 				return tx.Add(o)
 			})
 			if err != nil {
@@ -140,7 +140,7 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				continue
 			}
 
-			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 				return tx.Delete(*lastInserted)
 			})
 			if err != nil {
@@ -163,7 +163,7 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				},
 			}
 			lastInserted = &o
-			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 				return tx.Add(o)
 			})
 			if err != nil {
@@ -176,7 +176,7 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 			}
 
 			lastInserted.Unique = randomString(258)
-			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 				return tx.Update(*lastInserted)
 			})
 			if err != nil {
@@ -198,7 +198,7 @@ func stress(table *ds.Table, wg *sync.WaitGroup) {
 				},
 			}
 			lastInserted = &o
-			err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+			err := table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 				return tx.Add(o)
 			})
 			if err != nil {

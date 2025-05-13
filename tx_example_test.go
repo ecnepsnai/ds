@@ -12,24 +12,19 @@ func ExampleTable_StartRead() {
 		Enabled  bool   `ds:"index"`
 	}
 
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an example
 
 	// Get the user with username "example"
 	var user *User
-	table.StartRead(func(tx ds.IReadTransaction) error {
-		object, err := tx.Get("example")
+	table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
+		user, err = tx.Get("example")
 		if err != nil {
 			return err // error fetching data
 		}
-		if object == nil {
-			return nil // no object found
+		if user == nil {
+			return nil // no user found
 		}
-		u, ok := object.(User)
-		if !ok {
-			panic("incorrect type") // data in table was not the same type as expected
-		}
-		user = &u
-		return nil
+		return
 	})
 
 	if user == nil {
@@ -47,7 +42,7 @@ func ExampleTable_StartWrite() {
 		Enabled  bool   `ds:"index"`
 	}
 
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an example
 
 	newUser := User{
 		Username: "ian",
@@ -56,7 +51,7 @@ func ExampleTable_StartWrite() {
 		Enabled:  true,
 	}
 
-	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction[User]) error {
 		return tx.Add(newUser)
 	})
 	if err != nil {

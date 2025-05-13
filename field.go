@@ -13,7 +13,7 @@ type Field struct {
 	Type string
 }
 
-func (table *Table) getFields() []Field {
+func (table *Table[T]) getFields() []Field {
 	return structFieldsToFields(allFields(table.typeOf))
 }
 
@@ -29,7 +29,7 @@ func structFieldsToFields(fields []reflect.StructField) []Field {
 	return newFields
 }
 
-func (table *Table) getKeysFromFields() (string, []string, []string, error) {
+func (table *Table[T]) getKeysFromFields() (string, []string, []string, error) {
 	var primaryKey string
 	var indexes []string
 	var uniques []string

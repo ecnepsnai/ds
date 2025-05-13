@@ -18,12 +18,12 @@ func TestUpdateExistingValue(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		count := 5
 
 		i := 0
@@ -53,15 +53,11 @@ func TestUpdateExistingValue(t *testing.T) {
 			i--
 		}
 
-		objects, err := tx.GetAll(&ds.GetOptions{
+		results, err := tx.GetAll(&ds.GetOptions{
 			Sorted: true,
 		})
 		if err != nil {
 			t.Errorf("Error getting all values from table: %s", err.Error())
-		}
-		results := make([]exampleType, len(objects))
-		for i, obj := range objects {
-			results[i] = obj.(exampleType)
 		}
 
 		for i, result := range results {
@@ -83,12 +79,12 @@ func TestUpdateNewValue(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		object := exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),
@@ -111,12 +107,12 @@ func TestUpdateManyNewValue(t *testing.T) {
 		Primary int `ds:"primary"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		expected := 10
 
 		i := 0
@@ -147,12 +143,12 @@ func TestUpdatePointer(t *testing.T) {
 		Primary int `ds:"primary"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		if err := tx.Add(exampleType{1}); err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}

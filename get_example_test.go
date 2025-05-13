@@ -7,78 +7,64 @@ import (
 )
 
 func ExampleIReadTransaction_Get() {
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
-
 	type User struct {
 		Username string `ds:"primary"`
 	}
 
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an example
+
 	var user *User
-	table.StartRead(func(tx ds.IReadTransaction) error {
-		object, err := tx.Get("ian")
+	table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
+		user, err = tx.Get("ian")
 		if err != nil {
 			return err
 		}
-		if object == nil {
-			// No object with that primary key found
-			return nil
-		}
-
-		u, ok := object.(User)
-		if !ok {
-			// The object wasn't a `User`
-			panic("invalid type")
-		}
-		user = &u
-		return nil
+		return
 	})
+	if user == nil {
+		// No object with that primary key found
+		panic("No user found")
+	}
 
 	fmt.Printf("Username: %s\n", user)
 }
 
 func ExampleIReadTransaction_GetUnique() {
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
-
 	type User struct {
 		Username string `ds:"primary"`
 		Email    string `ds:"unique"`
 	}
 
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an example
+
 	var user *User
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
 		// Get the user with the email user@domain
-		object, err := tx.GetUnique("Email", "user@domain")
+		user, err = tx.GetUnique("Email", "user@domain")
 		if err != nil {
 			return err
 		}
-		if object == nil {
-			// No object with that primary key found
-			return nil
-		}
-
-		u, ok := object.(User)
-		if !ok {
-			// The object wasn't a `User`
-			panic("invalid type")
-		}
-		user = &u
-		return nil
+		return
 	})
+	if user == nil {
+		// No object with that primary key found
+		panic("No user found")
+	}
 
 	fmt.Printf("Username: %s\n", user)
 }
 
 func ExampleIReadTransaction_GetAll() {
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
-
 	type User struct {
 		Username string `ds:"primary"`
 	}
 
-	var users []User
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an example
+
+	var users []*User
+	table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
 		// Get only the first 100 users sorted by when they were added
-		objects, err := tx.GetAll(&ds.GetOptions{
+		users, err = tx.GetAll(&ds.GetOptions{
 			Sorted:    true,
 			Ascending: true,
 			Max:       100,
@@ -86,53 +72,35 @@ func ExampleIReadTransaction_GetAll() {
 		if err != nil {
 			return err
 		}
-		if objects == nil {
-			// No objects were returned
-			return nil
-		}
-
-		users = make([]User, len(objects))
-		for i, object := range objects {
-			user, ok := object.(User)
-			if !ok {
-				// The object wasn't a `User`
-				panic("invalid type")
-			}
-			users[i] = user
-		}
 		return nil
 	})
+	if users == nil {
+		panic("No entries returned")
+	}
+
+	fmt.Printf("Users: %d", len(users))
 }
 
 func ExampleIReadTransaction_GetIndex() {
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
-
 	type User struct {
 		Username string `ds:"primary"`
 		Enabled  bool   `ds:"index"`
 	}
 
-	var users []User
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an exampl
+
+	var users []*User
+	table.StartRead(func(tx ds.IReadTransaction[User]) (err error) {
 		// Get all enabled users
-		objects, err := tx.GetIndex("Enabled", true, nil)
+		users, err = tx.GetIndex("Enabled", true, nil)
 		if err != nil {
 			return err
 		}
-		if objects == nil {
-			// No objects were returned
-			return nil
-		}
-
-		users = make([]User, len(objects))
-		for i, object := range objects {
-			user, ok := object.(User)
-			if !ok {
-				// The object wasn't a `User`
-				panic("invalid type")
-			}
-			users[i] = user
-		}
-		return nil
+		return
 	})
+	if users == nil {
+		panic("No entries returned")
+	}
+
+	fmt.Printf("Users: %d", len(users))
 }

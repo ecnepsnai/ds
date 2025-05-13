@@ -3,24 +3,12 @@ package ds
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
-	"fmt"
 	"reflect"
 
 	"go.etcd.io/bbolt"
 )
 
-func (table *Table) delete(o any) error {
-	typeOf := reflect.TypeOf(o)
-
-	if typeOf.Kind() == reflect.Ptr {
-		table.log.Error("Refusing to delete a pointer from a table")
-		return errors.New(ErrPointer)
-	} else if table.typeOf.Name() != typeOf.Name() {
-		table.log.Error("Cannot delete type '%s' from table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
-		return fmt.Errorf("cannot delete type '%s' from table registered for type '%s'", typeOf.Name(), table.typeOf.Name())
-	}
-
+func (table *Table[T]) delete(o T) error {
 	err := table.data.Update(func(tx *bbolt.Tx) error {
 		return table.deleteObject(tx, o)
 	})
@@ -31,7 +19,7 @@ func (table *Table) delete(o any) error {
 	return nil
 }
 
-func (table *Table) deletePrimaryKey(o any) error {
+func (table *Table[T]) deletePrimaryKey(o any) error {
 	object, err := table.get(o)
 	if err != nil {
 		return err
@@ -39,10 +27,10 @@ func (table *Table) deletePrimaryKey(o any) error {
 	if object == nil {
 		return nil
 	}
-	return table.delete(object)
+	return table.delete(*object)
 }
 
-func (table *Table) deleteUnique(field string, o any) error {
+func (table *Table[T]) deleteUnique(field string, o any) error {
 	object, err := table.getUnique(field, o)
 	if err != nil {
 		return err
@@ -50,10 +38,10 @@ func (table *Table) deleteUnique(field string, o any) error {
 	if object == nil {
 		return nil
 	}
-	return table.delete(object)
+	return table.delete(*object)
 }
 
-func (table *Table) deleteObject(tx *bbolt.Tx, o any) error {
+func (table *Table[T]) deleteObject(tx *bbolt.Tx, o any) error {
 	primaryKeyBytes, err := table.primaryKeyBytes(o)
 	if err != nil {
 		return err
@@ -175,13 +163,13 @@ func (table *Table) deleteObject(tx *bbolt.Tx, o any) error {
 	return nil
 }
 
-func (table *Table) deleteAllIndex(fieldName string, value any) error {
+func (table *Table[T]) deleteAllIndex(fieldName string, value any) error {
 	objects, err := table.getIndex(fieldName, value, nil)
 	if err != nil {
 		return err
 	}
 	for _, object := range objects {
-		if err := table.delete(object); err != nil {
+		if err := table.delete(*object); err != nil {
 			return err
 		}
 	}
@@ -189,7 +177,7 @@ func (table *Table) deleteAllIndex(fieldName string, value any) error {
 	return nil
 }
 
-func (table *Table) deleteAll() error {
+func (table *Table[T]) deleteAll() error {
 	return table.data.Update(func(tx *bbolt.Tx) error {
 		if err := table.purgeBucket(tx, dataKey); err != nil {
 			return err
@@ -220,7 +208,7 @@ func (table *Table) deleteAll() error {
 	})
 }
 
-func (table *Table) purgeBucket(tx *bbolt.Tx, bucketName []byte) error {
+func (table *Table[T]) purgeBucket(tx *bbolt.Tx, bucketName []byte) error {
 	if err := tx.DeleteBucket(bucketName); err != nil {
 		table.log.PError("Error deleting bucket", map[string]any{
 			"bucket": bucketName,

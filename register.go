@@ -18,7 +18,7 @@ var currentDSSchemaVersion = 1
 
 // Register will register an instance of a struct with ds, creating a table (or opening an existing table) for this type
 // at the specified file path.
-func Register(o any, filePath string, options *Options) (*Table, error) {
+func Register[T any](o any, filePath string, options *Options) (*Table[T], error) {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		return nil, errors.New(ErrPointer)
@@ -31,7 +31,7 @@ func Register(o any, filePath string, options *Options) (*Table, error) {
 	registerGobType(Options{})
 	registerGobType(Config{})
 
-	table := Table{
+	table := Table[T]{
 		Name:   typeOf.Name(),
 		typeOf: typeOf,
 		log:    logtic.Log.Connect("ds(" + typeOf.Name() + ")"),
@@ -67,7 +67,7 @@ func Register(o any, filePath string, options *Options) (*Table, error) {
 	return &table, nil
 }
 
-func (table *Table) createTableBuckets(filePath string, force bool) error {
+func (table *Table[T]) createTableBuckets(filePath string, force bool) error {
 	data, err := bbolt.Open(filePath, os.ModePerm, nil)
 	if err != nil {
 		table.log.Error("Error opening bolt database: %s", err.Error())

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"reflect"
 )
 
 func gobEncode(i any) ([]byte, error) {
@@ -37,18 +36,18 @@ func gobDecodePrimaryKeyList(b []byte) ([][]byte, error) {
 	return w, nil
 }
 
-func (table *Table) gobDecodeValue(b []byte) (reflect.Value, error) {
+func (table *Table[T]) gobDecodeValue(b []byte) (*T, error) {
 	if len(b) == 0 {
-		return reflect.Value{}, fmt.Errorf("gobDecodeValue: nil data provided")
+		return nil, fmt.Errorf("gobDecodeValue: nil data provided")
 	}
 
-	value := reflect.New(table.typeOf).Elem()
+	var value T
 	reader := bytes.NewReader(b)
 	dec := gob.NewDecoder(reader)
-	if err := dec.DecodeValue(value); err != nil {
-		return value, fmt.Errorf("gobDecodeValue: %s", err.Error())
+	if err := dec.Decode(&value); err != nil {
+		return &value, fmt.Errorf("gobDecodeValue: %s", err.Error())
 	}
-	return value, nil
+	return &value, nil
 }
 
 func gobDecodeConfig(b []byte) (*Config, error) {

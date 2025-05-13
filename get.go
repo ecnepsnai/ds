@@ -18,7 +18,7 @@ type GetOptions struct {
 	Max int
 }
 
-func (table *Table) get(primaryKey any) (any, error) {
+func (table *Table[T]) get(primaryKey any) (*T, error) {
 	if primaryKey == nil {
 		return nil, nil
 	}
@@ -32,7 +32,7 @@ func (table *Table) get(primaryKey any) (any, error) {
 	return table.getPrimaryKey(primaryKeyBytes)
 }
 
-func (table *Table) getPrimaryKey(key []byte) (any, error) {
+func (table *Table[T]) getPrimaryKey(key []byte) (*T, error) {
 	var data []byte
 	err := table.data.View(func(tx *bbolt.Tx) error {
 		dataBucket := tx.Bucket(dataKey)
@@ -52,10 +52,10 @@ func (table *Table) getPrimaryKey(key []byte) (any, error) {
 		return nil, err
 	}
 
-	return value.Interface(), nil
+	return value, nil
 }
 
-func (table *Table) getIndex(fieldName string, value any, options *GetOptions) ([]any, error) {
+func (table *Table[T]) getIndex(fieldName string, value any, options *GetOptions) ([]*T, error) {
 	if !table.IsIndexed(fieldName) {
 		table.log.Error("Field '%s' is not indexed", fieldName)
 		return nil, fmt.Errorf("%s: %s", ErrFieldNotIndexed, fieldName)
@@ -89,7 +89,7 @@ func (table *Table) getIndex(fieldName string, value any, options *GetOptions) (
 	}
 	if primaryKeysData == nil {
 		table.log.Debug("Index value returned no primary keys")
-		return []any{}, nil
+		return []*T{}, nil
 	}
 
 	keys, err := gobDecodePrimaryKeyList(primaryKeysData)
@@ -119,13 +119,13 @@ func (table *Table) getIndex(fieldName string, value any, options *GetOptions) (
 	return table.getIndexUnsorted(keys, o)
 }
 
-func (table *Table) getIndexUnsorted(keys [][]byte, options GetOptions) ([]any, error) {
+func (table *Table[T]) getIndexUnsorted(keys [][]byte, options GetOptions) ([]*T, error) {
 	length := len(keys)
 	if options.Max > 0 && length > options.Max {
 		length = options.Max
 	}
 
-	var values = make([]any, length)
+	var values = make([]*T, length)
 	for i, key := range keys {
 		if i >= length {
 			break
@@ -142,7 +142,7 @@ func (table *Table) getIndexUnsorted(keys [][]byte, options GetOptions) ([]any, 
 	return values, nil
 }
 
-func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]any, error) {
+func (table *Table[T]) getIndexSorted(keys [][]byte, options GetOptions) ([]*T, error) {
 	orderMap := map[uint64][]byte{}
 	err := table.data.View(func(tx *bbolt.Tx) error {
 		for _, key := range keys {
@@ -175,7 +175,7 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]any, er
 	if options.Max > 0 && length > options.Max {
 		length = options.Max
 	}
-	var sortedObject = make([]any, length)
+	var sortedObject = make([]*T, length)
 	for i, key := range indexes {
 		if i >= length {
 			break
@@ -191,7 +191,7 @@ func (table *Table) getIndexSorted(keys [][]byte, options GetOptions) ([]any, er
 	return sortedObject, nil
 }
 
-func (table *Table) getUnique(fieldName string, value any) (any, error) {
+func (table *Table[T]) getUnique(fieldName string, value any) (*T, error) {
 	if !table.IsUnique(fieldName) {
 		table.log.Error("Field '%s' is not unique", fieldName)
 		return nil, fmt.Errorf("%s: %s", ErrFieldNotUnique, fieldName)
@@ -220,7 +220,7 @@ func (table *Table) getUnique(fieldName string, value any) (any, error) {
 	return table.getPrimaryKey(primaryKeyData)
 }
 
-func (table *Table) getAll(options *GetOptions) ([]any, error) {
+func (table *Table[T]) getAll(options *GetOptions) ([]*T, error) {
 	o := GetOptions{}
 	if options != nil {
 		o = *options
@@ -237,8 +237,8 @@ func (table *Table) getAll(options *GetOptions) ([]any, error) {
 	return table.getAllUnsorted(o)
 }
 
-func (table *Table) getAllUnsorted(options GetOptions) ([]any, error) {
-	var entires []any
+func (table *Table[T]) getAllUnsorted(options GetOptions) ([]*T, error) {
+	var entires []*T
 	i := 0
 	err := table.data.View(func(tx *bbolt.Tx) error {
 		dataBucket := tx.Bucket(dataKey)
@@ -253,7 +253,7 @@ func (table *Table) getAllUnsorted(options GetOptions) ([]any, error) {
 				table.log.Error("Error decoding value: %s", err.Error())
 				return err
 			}
-			entires = append(entires, value.Interface())
+			entires = append(entires, value)
 			return nil
 		})
 	})
@@ -264,7 +264,7 @@ func (table *Table) getAllUnsorted(options GetOptions) ([]any, error) {
 	return entires, nil
 }
 
-func (table *Table) getAllSorted(options GetOptions) ([]any, error) {
+func (table *Table[T]) getAllSorted(options GetOptions) ([]*T, error) {
 	// Map index to primary key
 	orderMap := map[uint64][]byte{}
 	err := table.data.View(func(tx *bbolt.Tx) error {
@@ -281,7 +281,7 @@ func (table *Table) getAllSorted(options GetOptions) ([]any, error) {
 	}
 
 	if len(orderMap) == 0 {
-		return []any{}, nil
+		return []*T{}, nil
 	}
 
 	// To store the keys in slice in sorted order
@@ -300,7 +300,7 @@ func (table *Table) getAllSorted(options GetOptions) ([]any, error) {
 	if options.Max > 0 && length > options.Max {
 		length = options.Max
 	}
-	objects := make([]any, length)
+	objects := make([]*T, length)
 	for i, index := range keys {
 		if i >= length {
 			break

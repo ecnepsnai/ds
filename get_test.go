@@ -19,12 +19,12 @@ func TestGet(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		err = tx.Add(exampleType{
 			Primary: primaryKey,
 			Index:   randomString(12),
@@ -34,12 +34,11 @@ func TestGet(t *testing.T) {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}
 
-		v, err := tx.Get(primaryKey)
+		got, err := tx.Get(primaryKey)
 		if err != nil {
 			t.Errorf("Error getting object: %s", err.Error())
 		}
-		got := v.(exampleType).Primary
-		if got != primaryKey {
+		if got.Primary != primaryKey {
 			t.Errorf("Incorrect primary key returned. Expected '%s' got '%s", primaryKey, got)
 		}
 		return nil
@@ -56,12 +55,12 @@ func TestGetIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -99,12 +98,12 @@ func TestGetUnmatchedIndex(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register(exampleType{}, tablePath, nil)
+	table, err := ds.Register[exampleType](exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		// Add data to the table
 		i := 0
 		count := 10
@@ -135,12 +134,12 @@ func TestGetUnmatchedIndex(t *testing.T) {
 	})
 	db.Close()
 
-	table, err = ds.Register(exampleType{}, tablePath, nil)
+	table, err = ds.Register[exampleType](exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[exampleType]) error {
 		// This should return nothing
 		objects, err := tx.GetIndex("Index", index, nil)
 		if err != nil {
@@ -163,12 +162,12 @@ func TestGetIndexSortedAscending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -191,8 +190,7 @@ func TestGetIndexSortedAscending(t *testing.T) {
 		if len(objects) != count {
 			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
 		}
-		for i, object := range objects {
-			example := object.(exampleType)
+		for i, example := range objects {
 			expect := (count - 1) - i
 			if expect != example.Value {
 				t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
@@ -212,12 +210,12 @@ func TestGetIndexSortedDescending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -240,8 +238,7 @@ func TestGetIndexSortedDescending(t *testing.T) {
 		if len(objects) != count {
 			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
 		}
-		for i, object := range objects {
-			example := object.(exampleType)
+		for i, example := range objects {
 			if i != example.Value {
 				t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
 			}
@@ -260,12 +257,12 @@ func TestGetIndexSortedNonSortedTable(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), &ds.Options{DisableSorting: true})
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), &ds.Options{DisableSorting: true})
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -302,12 +299,12 @@ func TestGetUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		err = tx.Add(exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),
@@ -317,15 +314,14 @@ func TestGetUnique(t *testing.T) {
 			t.Errorf("Error adding value to table: %s", err.Error())
 		}
 
-		v, err := tx.GetUnique("Unique", unique)
+		got, err := tx.GetUnique("Unique", unique)
 		if err != nil {
 			t.Errorf("Error getting object: %s", err.Error())
 		}
-		if v == nil {
+		if got == nil {
 			t.Fatalf("No data returned when expected")
 		}
-		got := v.(exampleType).Unique
-		if got != unique {
+		if got.Unique != unique {
 			t.Errorf("Incorrect unique value returned. Expected '%s' got '%s", unique, got)
 		}
 		return nil
@@ -342,12 +338,12 @@ func TestGetUnmatchedUnique(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register(exampleType{}, tablePath, nil)
+	table, err := ds.Register[exampleType](exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		err = tx.Add(exampleType{
 			Primary: randomString(12),
 			Unique:  unique,
@@ -371,12 +367,12 @@ func TestGetUnmatchedUnique(t *testing.T) {
 	})
 	db.Close()
 
-	table, err = ds.Register(exampleType{}, tablePath, nil)
+	table, err = ds.Register[exampleType](exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[exampleType]) error {
 		v, err := tx.GetUnique("Unique", unique)
 		if err != nil {
 			t.Errorf("Error getting object: %s", err.Error())
@@ -397,12 +393,12 @@ func TestGetNilPrimaryKey(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[exampleType]) error {
 		object, err := tx.Get(nil)
 		if err != nil {
 			t.Errorf("Unexpected error getting value: %s", err.Error())
@@ -423,12 +419,12 @@ func TestGetNonindexedField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[exampleType]) error {
 		object, err := tx.GetIndex(randomString(12), randomString(12), nil)
 		if err == nil {
 			t.Errorf("No error seen while attempting to get nonindexed field")
@@ -449,12 +445,12 @@ func TestGetNonuniqueField(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[exampleType]) error {
 		object, err := tx.GetUnique(randomString(12), randomString(12))
 		if err == nil {
 			t.Errorf("No error seen while attempting to get nonunique field")
@@ -475,12 +471,12 @@ func TestGetAll(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -516,12 +512,12 @@ func TestGetAllSortedAscending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -544,8 +540,7 @@ func TestGetAllSortedAscending(t *testing.T) {
 		if len(objects) != count {
 			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
 		}
-		for i, object := range objects {
-			example := object.(exampleType)
+		for i, example := range objects {
 			expect := (count - 1) - i
 			if expect != example.Value {
 				t.Errorf("Unexpected sorted object value. Expected %d got %d", expect, example.Value)
@@ -565,12 +560,12 @@ func TestGetAllSortedDescending(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -593,8 +588,7 @@ func TestGetAllSortedDescending(t *testing.T) {
 		if len(objects) != count {
 			t.Errorf("Unexpected object count returned. Expected %d got %d", count, len(objects))
 		}
-		for i, object := range objects {
-			example := object.(exampleType)
+		for i, example := range objects {
 			if i != example.Value {
 				t.Errorf("Unexpected sorted object value. Expected %d got %d", i, example.Value)
 			}
@@ -612,12 +606,12 @@ func TestGetNoResults(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartRead(func(tx ds.IReadTransaction) error {
+	table.StartRead(func(tx ds.IReadTransaction[exampleType]) error {
 		object, err := tx.Get(randomString(12))
 		if err != nil {
 			t.Errorf("Unexpected error getting item: %s", err.Error())
@@ -663,12 +657,12 @@ func TestGetIndexMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -727,12 +721,12 @@ func TestGetAllMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -791,12 +785,12 @@ func TestGetIndexSortedMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {
@@ -855,12 +849,12 @@ func TestGetAllSortedMaximum(t *testing.T) {
 		Value   int    `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		i := 0
 		count := 10
 		for i < count {

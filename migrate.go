@@ -10,7 +10,7 @@ import (
 
 // MigrateParams describes the parameters to perform a DS table migration.
 // All fields are required unless otherwise specified.
-type MigrateParams struct {
+type MigrateParams[OldType any, NewType any] struct {
 	// TablePath the path to the existing table file
 	TablePath string
 	// NewPath the path for the new table file. This can be the same as the old table.
@@ -26,13 +26,13 @@ type MigrateParams struct {
 	// MigrateObject method called for each entry in the table in reverse order. Return a new type, error, or nil.
 	// Migration is halted if an error is returned.
 	// Return (nil, nil) and the entry will be skipped from migration, but migration will continue.
-	MigrateObject func(o any) (any, error)
+	MigrateObject func(o *OldType) (*NewType, error)
 	// KeepBackup (optional) if false the backup copy of the table will be discarded if the migration was successful. If true
 	// the copy is not deleted.
 	KeepBackup bool
 }
 
-func (params MigrateParams) validate() error {
+func (params MigrateParams[OldType, NewType]) validate() error {
 	if _, err := os.Stat(params.TablePath); err != nil {
 		return fmt.Errorf("%s: %s", ErrMigrateTablePathNotFound, err.Error())
 	}
@@ -80,7 +80,7 @@ type MigrationResults struct {
 //
 // Ensure you read the documentation of the MigrateParams struct, as it goes into greater detail on the parameters
 // required for migration, and what they do.
-func Migrate(params MigrateParams) (results MigrationResults) {
+func Migrate[OldType any, NewType any](params MigrateParams[OldType, NewType]) (results MigrationResults) {
 	log := logtic.Log.Connect("ds-migration")
 
 	if err := params.validate(); err != nil {
@@ -114,7 +114,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 	}
 	options.force = true
 
-	oldTable, err := Register(params.OldType, backupPath, options)
+	oldTable, err := Register[OldType](params.OldType, backupPath, options)
 	if err != nil {
 		log.Error("Error registering old table: %s", err.Error())
 		results.Success = false
@@ -127,7 +127,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 		options.DisableSorting = true
 	}
 
-	table, err := Register(params.NewType, params.NewPath, options)
+	table, err := Register[NewType](params.NewType, params.NewPath, options)
 	if err != nil {
 		log.Error("Error registering new table: %s", err.Error())
 		results.Success = false
@@ -160,7 +160,7 @@ func Migrate(params MigrateParams) (results MigrationResults) {
 			i--
 			continue
 		}
-		if err := table.add(newObject); err != nil {
+		if err := table.add(*newObject); err != nil {
 			log.Error("Error adding new entry to table: %s", err.Error())
 			results.Success = false
 			results.Error = err

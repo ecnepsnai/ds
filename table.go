@@ -10,7 +10,7 @@ import (
 
 // Table describes a ds table. A table is mapped to a single registered object type and contains
 // both the data and the indexes.
-type Table struct {
+type Table[T any] struct {
 	Name       string
 	typeOf     reflect.Type
 	log        *logtic.Source
@@ -23,7 +23,7 @@ type Table struct {
 }
 
 // Close will close the table. This will not panic if the table has not been opened or already been closed.
-func (table *Table) Close() {
+func (table *Table[T]) Close() {
 	if table != nil && table.data != nil {
 		go tryCloseData(table.data)
 	}
@@ -35,7 +35,7 @@ func tryCloseData(data *bbolt.DB) {
 }
 
 // IsIndexed is the given field indexed
-func (table *Table) IsIndexed(field string) bool {
+func (table *Table[T]) IsIndexed(field string) bool {
 	for _, index := range table.indexes {
 		if index == field {
 			return true
@@ -45,7 +45,7 @@ func (table *Table) IsIndexed(field string) bool {
 }
 
 // IsUnique is the given field unique
-func (table *Table) IsUnique(field string) bool {
+func (table *Table[T]) IsUnique(field string) bool {
 	for _, unique := range table.uniques {
 		if unique == field {
 			return true

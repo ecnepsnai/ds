@@ -2,7 +2,7 @@ package ds
 
 import "reflect"
 
-func (table *Table) primaryKeyBytes(o any) ([]byte, error) {
+func (table *Table[T]) primaryKeyBytes(o any) ([]byte, error) {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())

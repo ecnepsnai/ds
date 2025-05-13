@@ -10,7 +10,7 @@ func ExampleIReadWriteTransaction_Update() {
 		Enabled  bool   `ds:"index"`
 	}
 
-	var table *ds.Table // Assumes the table is already registered, see ds.Register for an example
+	var table *ds.Table[User] // Assumes the table is already registered, see ds.Register for an example
 
 	newUser := User{
 		Username: "ian",
@@ -19,7 +19,7 @@ func ExampleIReadWriteTransaction_Update() {
 		Enabled:  true,
 	}
 
-	err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	err := table.StartWrite(func(tx ds.IReadWriteTransaction[User]) error {
 		return tx.Add(newUser)
 	})
 	if err != nil {
@@ -29,7 +29,7 @@ func ExampleIReadWriteTransaction_Update() {
 	newUser.Password = "something else"
 
 	// Update an existing entry (based on the primary key)
-	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[User]) error {
 		return tx.Update(newUser)
 	})
 	if err != nil {

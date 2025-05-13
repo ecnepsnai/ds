@@ -9,7 +9,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-func (table *Table) add(o any) error {
+func (table *Table[T]) add(o T) error {
 	typeOf := reflect.TypeOf(o)
 	if typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to add a pointer to the table")
@@ -31,7 +31,7 @@ func (table *Table) add(o any) error {
 	return nil
 }
 
-func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryKeyBytes []byte) error {
+func (table *Table[T]) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryKeyBytes []byte) error {
 	for _, index := range table.indexes {
 		indexValue := valueOf.FieldByName(index)
 		indexValueBytes, err := gobEncode(indexValue.Interface())
@@ -83,7 +83,7 @@ func (table *Table) addUpdateIndex(tx *bbolt.Tx, valueOf reflect.Value, primaryK
 	return nil
 }
 
-func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primaryKeyBytes []byte) error {
+func (table *Table[T]) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primaryKeyBytes []byte) error {
 	for _, unique := range table.uniques {
 		uniqueValue := valueOf.FieldByName(unique)
 		uniqueValueBytes, err := gobEncode(uniqueValue.Interface())
@@ -134,7 +134,7 @@ func (table *Table) addUpdateUnique(tx *bbolt.Tx, valueOf reflect.Value, primary
 	return nil
 }
 
-func (table *Table) addObject(tx *bbolt.Tx, o any) error {
+func (table *Table[T]) addObject(tx *bbolt.Tx, o any) error {
 	valueOf := reflect.Indirect(reflect.ValueOf(o))
 	primaryKeyValue := valueOf.FieldByName(table.primaryKey)
 	primaryKeyBytes, err := gobEncode(primaryKeyValue.Interface())
@@ -193,7 +193,7 @@ func (table *Table) addObject(tx *bbolt.Tx, o any) error {
 	return nil
 }
 
-func (table *Table) setInsertIndexForObject(tx *bbolt.Tx, object reflect.Value, index uint64) error {
+func (table *Table[T]) setInsertIndexForObject(tx *bbolt.Tx, object reflect.Value, index uint64) error {
 	pk := object.FieldByName(table.primaryKey).Interface()
 	primaryKey, err := gobEncode(pk)
 	if err != nil {

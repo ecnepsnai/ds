@@ -24,12 +24,12 @@ func TestMigrate(t *testing.T) {
 		}
 
 		tp := path.Join(t.TempDir(), randomString(12))
-		table, err := ds.Register(user{}, tp, nil)
+		table, err := ds.Register[user](user{}, tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction[user]) error {
 			i := 0
 			for i < count {
 				err := tx.Add(user{
@@ -69,14 +69,13 @@ func TestMigrate(t *testing.T) {
 		Password string
 	}
 
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams[oldUser, newUser]{
 		TablePath: tablePath,
 		OldType:   oldUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
-			old := o.(oldUser)
-			return newUser{
+		MigrateObject: func(old *oldUser) (*newUser, error) {
+			return &newUser{
 				ID:       randomString(24),
 				Username: old.Username,
 				Email:    old.Email,
@@ -117,12 +116,12 @@ func TestMigrateStruct(t *testing.T) {
 		}
 
 		tp := path.Join(t.TempDir(), randomString(12))
-		table, err := ds.Register(user{}, tp, nil)
+		table, err := ds.Register[user](user{}, tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction[user]) error {
 			i := 0
 			for i < count {
 				err := tx.Add(user{
@@ -176,14 +175,13 @@ func TestMigrateStruct(t *testing.T) {
 		Identification newIdentification
 	}
 
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate[oldUser, newUser](ds.MigrateParams[oldUser, newUser]{
 		TablePath: tablePath,
 		OldType:   oldUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
-			old := o.(oldUser)
-			return newUser{
+		MigrateObject: func(old *oldUser) (*newUser, error) {
+			return &newUser{
 				ID:       randomString(24),
 				Username: old.Username,
 				Email:    old.Email,
@@ -223,13 +221,13 @@ func TestMigrateSkip(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register(oldType{}, tablePath, nil)
+	table, err := ds.Register[oldType](oldType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
 	count := 10
-	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[oldType]) error {
 		i := 0
 		index := randomString(12)
 		for i < count {
@@ -252,16 +250,15 @@ func TestMigrateSkip(t *testing.T) {
 	table.Close()
 
 	i := 0
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate[oldType, newType](ds.MigrateParams[oldType, newType]{
 		TablePath: tablePath,
 		OldType:   oldType{},
 		NewType:   newType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
-			old := o.(oldType)
+		MigrateObject: func(old *oldType) (*newType, error) {
 			if i%2 == 0 {
 				i++
-				return newType{
+				return &newType{
 					Primary:       old.Primary,
 					Index:         old.Index,
 					SomethingElse: i,
@@ -302,14 +299,14 @@ func TestMigrateFail(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register(oldType{}, tablePath, nil)
+	table, err := ds.Register[oldType](oldType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
 	i := 0
 	count := 10
-	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[oldType]) error {
 		index := randomString(12)
 		for i < count {
 			err = tx.Add(oldType{
@@ -331,18 +328,17 @@ func TestMigrateFail(t *testing.T) {
 	table.Close()
 
 	i = 0
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate[oldType, newType](ds.MigrateParams[oldType, newType]{
 		TablePath: tablePath,
 		OldType:   oldType{},
 		NewType:   newType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
-			old := o.(oldType)
+		MigrateObject: func(old *oldType) (*newType, error) {
 			if i == count/2 {
 				return nil, fmt.Errorf("Fake error")
 			}
 			i++
-			return newType{
+			return &newType{
 				Primary:       old.Primary,
 				Index:         old.Index,
 				SomethingElse: i,
@@ -368,12 +364,12 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	tablePath := path.Join(t.TempDir(), randomString(12))
-	table, err := ds.Register(exampleType{}, tablePath, nil)
+	table, err := ds.Register[exampleType](exampleType{}, tablePath, nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		return tx.Add(exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),
@@ -386,11 +382,11 @@ func TestMigrateParams(t *testing.T) {
 	table.Close()
 
 	// Missing table path
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		OldType: exampleType{},
 		NewType: exampleType{},
 		NewPath: tablePath,
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -399,11 +395,11 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing old type
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -412,11 +408,11 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing new type
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -425,12 +421,12 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// New type is pointer
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewType:   &exampleType{},
 		OldType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -439,12 +435,12 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Old type is pointer
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewType:   exampleType{},
 		OldType:   &exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -453,11 +449,11 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing new path
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewType:   exampleType{},
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -466,7 +462,7 @@ func TestMigrateParams(t *testing.T) {
 	}
 
 	// Missing migrate method
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewPath:   tablePath,
 		OldType:   exampleType{},
@@ -478,12 +474,12 @@ func TestMigrateParams(t *testing.T) {
 
 	// Backup already exists
 	os.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
-	stats = ds.Migrate(ds.MigrateParams{
+	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		OldType:   exampleType{},
 		NewType:   exampleType{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
+		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
 		},
 	})
@@ -501,11 +497,24 @@ func TestMigrateSorted(t *testing.T) {
 		ID     int `ds:"primary"`
 		Value1 string
 	}
+	type newUser struct {
+		ID     int `ds:"primary"`
+		Value2 string
+	}
 
 	count := 10
 
-	registerTable := func(tt any) *ds.Table {
-		table, err := ds.Register(tt, tablePath, nil)
+	registerOriginalTable := func(tt any) *ds.Table[originalUser] {
+		table, err := ds.Register[originalUser](tt, tablePath, nil)
+		if err != nil {
+			t.Fatalf("Error registering table: %s", err.Error())
+		}
+
+		return table
+	}
+
+	registerNewTable := func(tt any) *ds.Table[newUser] {
+		table, err := ds.Register[newUser](tt, tablePath, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
@@ -514,10 +523,10 @@ func TestMigrateSorted(t *testing.T) {
 	}
 
 	registerAndCloseTable := func() {
-		table := registerTable(originalUser{})
+		table := registerOriginalTable(originalUser{})
 
 		i := 0
-		err := table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err := table.StartWrite(func(tx ds.IReadWriteTransaction[originalUser]) error {
 			for i < count {
 				err := tx.Add(originalUser{
 					ID:     i,
@@ -539,19 +548,13 @@ func TestMigrateSorted(t *testing.T) {
 
 	registerAndCloseTable()
 
-	type newUser struct {
-		ID     int `ds:"primary"`
-		Value2 string
-	}
-
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams[originalUser, newUser]{
 		TablePath: tablePath,
 		OldType:   originalUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
-			old := o.(originalUser)
-			return newUser{
+		MigrateObject: func(old *originalUser) (*newUser, error) {
+			return &newUser{
 				ID:     old.ID,
 				Value2: old.Value1,
 			}, nil
@@ -567,13 +570,13 @@ func TestMigrateSorted(t *testing.T) {
 		t.Errorf("Not all entries migrated. Expected %d got %d", count, stats.EntriesMigrated)
 	}
 
-	table := registerTable(newUser{})
+	table := registerNewTable(newUser{})
 	defer table.Close()
 
-	var objects []any
+	var users []*newUser
 	var err error
-	err = table.StartRead(func(tx ds.IReadTransaction) error {
-		objects, err = tx.GetAll(&ds.GetOptions{
+	err = table.StartRead(func(tx ds.IReadTransaction[newUser]) error {
+		users, err = tx.GetAll(&ds.GetOptions{
 			Sorted: true,
 		})
 		return err
@@ -581,12 +584,8 @@ func TestMigrateSorted(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error getting all objects from table: %s", err.Error())
 	}
-	if len(objects) != count {
-		t.Errorf("Incorrect number of objects returned. Expected %d got %d", count, len(objects))
-	}
-	users := make([]newUser, count)
-	for i, obj := range objects {
-		users[i] = obj.(newUser)
+	if len(users) != count {
+		t.Errorf("Incorrect number of objects returned. Expected %d got %d", count, len(users))
 	}
 
 	for i, user := range users {
@@ -611,12 +610,12 @@ func TestMigrateAddIndex(t *testing.T) {
 		}
 
 		tp := path.Join(t.TempDir(), randomString(12))
-		table, err := ds.Register(user{}, tp, nil)
+		table, err := ds.Register[user](user{}, tp, nil)
 		if err != nil {
 			t.Fatalf("Error registering table: %s", err.Error())
 		}
 
-		err = table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+		err = table.StartWrite(func(tx ds.IReadWriteTransaction[user]) error {
 			i := 0
 			for i < count {
 				err := tx.Add(user{
@@ -655,13 +654,18 @@ func TestMigrateAddIndex(t *testing.T) {
 		Password string `json:"-"`
 	}
 
-	stats := ds.Migrate(ds.MigrateParams{
+	stats := ds.Migrate(ds.MigrateParams[oldUser, newUser]{
 		TablePath: tablePath,
 		OldType:   oldUser{},
 		NewType:   newUser{},
 		NewPath:   tablePath,
-		MigrateObject: func(o any) (any, error) {
-			return newUser(o.(oldUser)), nil
+		MigrateObject: func(old *oldUser) (*newUser, error) {
+			return &newUser{
+				Username: old.Username,
+				Email:    old.Email,
+				Enabled:  old.Enabled,
+				Password: old.Password,
+			}, nil
 		},
 	})
 	if stats.Error != nil {

@@ -17,7 +17,7 @@ func TestDelete(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
@@ -28,7 +28,7 @@ func TestDelete(t *testing.T) {
 		Unique:  randomString(12),
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		err = tx.Add(object)
 		if err != nil {
 			t.Errorf("Error adding value to table: %s", err.Error())
@@ -59,12 +59,12 @@ func TestDeleteIndex(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		index := randomString(12)
 		i := 0
 		for i < 10 {
@@ -96,12 +96,12 @@ func TestDeleteIndexMissing(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		index := randomString(12)
 		i := 0
 		for i < 10 {
@@ -141,12 +141,12 @@ func TestDeleteNotSaved(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		object := exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),
@@ -154,65 +154,6 @@ func TestDeleteNotSaved(t *testing.T) {
 		}
 		if err := tx.Delete(object); err != nil {
 			t.Errorf("Error removing value from table: %s", err.Error())
-		}
-		return nil
-	})
-}
-
-// Test that attempting to delete a pointer returns an error
-func TestDeletePointer(t *testing.T) {
-	t.Parallel()
-
-	type exampleType struct {
-		Primary string `ds:"primary"`
-		Index   string `ds:"index"`
-		Unique  string `ds:"unique"`
-	}
-
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
-	if err != nil {
-		t.Errorf("Error registering table: %s", err.Error())
-	}
-
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
-		object := exampleType{
-			Primary: randomString(12),
-			Index:   randomString(12),
-			Unique:  randomString(12),
-		}
-		err = tx.Delete(&object)
-		if err == nil {
-			t.Error("No error seen while attempting to delete a pointer from a table")
-		}
-		return nil
-	})
-}
-
-// Test that attempting to delete an object of the wrong type returns an error
-func TestDeleteTypeMismatch(t *testing.T) {
-	t.Parallel()
-
-	type exampleType struct {
-		Primary string `ds:"primary"`
-		Index   string `ds:"index"`
-		Unique  string `ds:"unique"`
-	}
-
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
-	if err != nil {
-		t.Errorf("Error registering table: %s", err.Error())
-	}
-
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
-		type otherType struct {
-			Foo string `ds:"primary"`
-		}
-
-		err = tx.Delete(otherType{
-			Foo: randomString(12),
-		})
-		if err == nil {
-			t.Error("No error seen while attempting to delete incorrect object into table")
 		}
 		return nil
 	})
@@ -228,12 +169,12 @@ func TestDeletePrimaryKey(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		object := exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),
@@ -270,12 +211,12 @@ func TestDeletePrimaryKeyMissing(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		if err := tx.DeletePrimaryKey(randomString(12)); err != nil {
 			t.Errorf("Error removing value from table: %s", err.Error())
 		}
@@ -293,12 +234,12 @@ func TestDeleteUnique(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		object := exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),
@@ -335,12 +276,12 @@ func TestDeleteUniqueMissing(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		if err := tx.DeleteUnique("Unique", randomString(12)); err != nil {
 			t.Errorf("Error removing value from table: %s", err.Error())
 		}
@@ -358,12 +299,12 @@ func TestDeleteAll(t *testing.T) {
 		Unique  string `ds:"unique"`
 	}
 
-	table, err := ds.Register(exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
+	table, err := ds.Register[exampleType](exampleType{}, path.Join(t.TempDir(), randomString(12)), nil)
 	if err != nil {
 		t.Errorf("Error registering table: %s", err.Error())
 	}
 
-	table.StartWrite(func(tx ds.IReadWriteTransaction) error {
+	table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
 		object := exampleType{
 			Primary: randomString(12),
 			Index:   randomString(12),

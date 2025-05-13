@@ -42,7 +42,7 @@ func getTableOptions(tablePath string) (*Options, error) {
 	return gobDecodeOptions(optionsData)
 }
 
-func (table *Table) getConfig(tx *bbolt.Tx) (*Config, error) {
+func (table *Table[T]) getConfig(tx *bbolt.Tx) (*Config, error) {
 	configData := tx.Bucket(configKey).Get(configKey)
 	if configData == nil {
 		table.log.Error("No config present for table")
@@ -67,7 +67,7 @@ func (config *Config) update(tx *bbolt.Tx) error {
 	return bucket.Put(configKey, data)
 }
 
-func (table *Table) initializeConfig(tx *bbolt.Tx, force bool) error {
+func (table *Table[T]) initializeConfig(tx *bbolt.Tx, force bool) error {
 	configBucket, err := tx.CreateBucketIfNotExists(configKey)
 	if err != nil {
 		table.log.PError("Error creating config bucket", map[string]any{

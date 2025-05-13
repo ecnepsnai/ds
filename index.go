@@ -7,7 +7,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) *uint64 {
+func (table *Table[T]) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) *uint64 {
 	indexBucket := tx.Bucket(insertOrderKey)
 	b := indexBucket.Get(primaryKey)
 	if len(b) == 0 {
@@ -17,7 +17,7 @@ func (table *Table) indexForPrimaryKey(tx *bbolt.Tx, primaryKey []byte) *uint64 
 	return &index
 }
 
-func (table *Table) indexForObject(tx *bbolt.Tx, object any) (*uint64, error) {
+func (table *Table[T]) indexForObject(tx *bbolt.Tx, object any) (*uint64, error) {
 	pk := reflect.ValueOf(object).FieldByName(table.primaryKey).Interface()
 	pkBytes, err := gobEncode(pk)
 	if err != nil {

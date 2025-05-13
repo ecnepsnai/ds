@@ -9,32 +9,13 @@ import (
 	"github.com/ecnepsnai/logtic"
 )
 
-func testSetup() {
-	verbose := false
-	for _, arg := range os.Args {
-		if arg == "-test.v=true" {
-			verbose = true
-		}
-	}
-
-	if verbose {
-		logtic.Log.FilePath = os.DevNull
-		logtic.Log.Level = logtic.LevelDebug
-		if err := logtic.Log.Open(); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func testTeardown() {
-	logtic.Log.Close()
-}
-
 func TestMain(m *testing.M) {
-	testSetup()
-	retCode := m.Run()
-	testTeardown()
-	os.Exit(retCode)
+	logtic.Log.Level = logtic.LevelDebug
+	if err := logtic.Log.Open(); err != nil {
+		panic(err)
+	}
+
+	os.Exit(m.Run())
 }
 
 func randomString(length uint16) string {

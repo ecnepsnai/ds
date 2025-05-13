@@ -7,7 +7,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-func (table *Table) update(o any) error {
+func (table *Table[T]) update(o any) error {
 	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
 		table.log.Error("Refusing to update pointer from table")
 		return errors.New(ErrPointer)
