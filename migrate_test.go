@@ -374,7 +374,7 @@ func TestMigrateParams(t *testing.T) {
 	table.Close()
 
 	// Missing table path
-	stats := ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
+	stats := ds.Migrate(ds.MigrateParams[exampleType, exampleType]{
 		NewPath: tablePath,
 		MigrateObject: func(old *exampleType) (*exampleType, error) {
 			return nil, nil
@@ -384,43 +384,8 @@ func TestMigrateParams(t *testing.T) {
 		t.Errorf("No error seen for invalid migration request")
 	}
 
-	// New type is pointer
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
-		TablePath: tablePath,
-		NewPath:   tablePath,
-		MigrateObject: func(old *exampleType) (*exampleType, error) {
-			return nil, nil
-		},
-	})
-	if stats.Error == nil {
-		t.Errorf("No error seen for invalid migration request")
-	}
-
-	// Old type is pointer
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
-		TablePath: tablePath,
-		NewPath:   tablePath,
-		MigrateObject: func(old *exampleType) (*exampleType, error) {
-			return nil, nil
-		},
-	})
-	if stats.Error == nil {
-		t.Errorf("No error seen for invalid migration request")
-	}
-
-	// Missing new path
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
-		TablePath: tablePath,
-		MigrateObject: func(old *exampleType) (*exampleType, error) {
-			return nil, nil
-		},
-	})
-	if stats.Error == nil {
-		t.Errorf("No error seen for invalid migration request")
-	}
-
 	// Missing migrate method
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
+	stats = ds.Migrate(ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewPath:   tablePath,
 	})
@@ -430,7 +395,7 @@ func TestMigrateParams(t *testing.T) {
 
 	// Backup already exists
 	os.WriteFile(tablePath+"_backup", []byte(""), os.ModePerm)
-	stats = ds.Migrate[exampleType, exampleType](ds.MigrateParams[exampleType, exampleType]{
+	stats = ds.Migrate(ds.MigrateParams[exampleType, exampleType]{
 		TablePath: tablePath,
 		NewPath:   tablePath,
 		MigrateObject: func(old *exampleType) (*exampleType, error) {

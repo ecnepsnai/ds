@@ -11,14 +11,13 @@ import (
 // MigrateParams describes the parameters to perform a DS table migration.
 // All fields are required unless otherwise specified.
 //
-// OldType an instance of a struct object that has the same definition as the existing table.
-//
-// NewType an instance of a struct object that has the definition that shall be used. This can be the same as the
-// OldType.
+//   - `OldType` is an instance of a struct object that has the same definition as the existing table.
+//   - `NewType` is an instance of a struct object that has the definition that shall be used. This can be the same as
+//     the OldType.
 type MigrateParams[OldType any, NewType any] struct {
 	// TablePath the path to the existing table file
 	TablePath string
-	// NewPath the path for the new table file. This can be the same as the old table.
+	// NewPath (optional) is the path for the new table file. If blank then the existing table path is re-used.
 	NewPath string
 	// DisableSorting (optional) if the current table is sorted, set this to true to disable sorting
 	// Note: This is irreversible!
@@ -27,12 +26,12 @@ type MigrateParams[OldType any, NewType any] struct {
 	// Migration is halted if an error is returned.
 	// Return (nil, nil) and the entry will be skipped from migration, but migration will continue.
 	MigrateObject func(o *OldType) (*NewType, error)
-	// KeepBackup (optional) if false the backup copy of the table will be discarded if the migration was successful. If true
-	// the copy is not deleted.
+	// KeepBackup (optional) if false the backup copy of the table will be discarded if the migration was successful. If
+	// true, the copy is not deleted.
 	KeepBackup bool
 }
 
-func (params MigrateParams[OldType, NewType]) validate() error {
+func (params *MigrateParams[OldType, NewType]) validate() error {
 	var oldT OldType
 	var newT NewType
 
@@ -40,7 +39,7 @@ func (params MigrateParams[OldType, NewType]) validate() error {
 		return fmt.Errorf("%s: %s", ErrMigrateTablePathNotFound, err.Error())
 	}
 	if params.NewPath == "" {
-		return fmt.Errorf("%s: NewPath", ErrMissingRequiredValue)
+		params.NewPath = params.TablePath
 	}
 	if params.MigrateObject == nil {
 		return fmt.Errorf("%s: MigrateObject", ErrMissingRequiredValue)
@@ -68,11 +67,11 @@ type MigrationResults struct {
 }
 
 // Migrate will migrate a DS table from one object type to another. You must migrate if the old data type is not
-// compatible with the new type, such as if an existing field was changed. You don't need to migrate if you add or
-// remove an existing field.
+// compatible with the new type, such as if an existing field was changed. You don't need to migrate if you add a new
+// field or remove an existing field.
 //
 // Before the existing data is touched, a copy is made with "_backup" appended to the filename, and a new table file is
-// created with the migrated entries. Upon successful migration, the backup copy is deleted (by default). If the table
+// created with the migrated entries. Upon successful migration, the backup copy is deleted by default. If the table
 // being migrated is sorted, the original order is preserved.
 //
 // Ensure you read the documentation of the MigrateParams struct, as it goes into greater detail on the parameters
