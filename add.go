@@ -11,10 +11,6 @@ import (
 
 func (table *Table[T]) add(o T) error {
 	typeOf := reflect.TypeOf(o)
-	if typeOf.Kind() == reflect.Ptr {
-		table.log.Error("Refusing to add a pointer to the table")
-		return errors.New(ErrPointer)
-	}
 	if err := compareFields(table.getFields(), structFieldsToFields(allFields(typeOf))); err != nil {
 		table.log.Error("Incompatible object definition: %s", err.Error())
 		return err

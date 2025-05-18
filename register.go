@@ -2,7 +2,6 @@ package ds
 
 import (
 	"encoding/gob"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -21,9 +20,6 @@ var currentDSSchemaVersion = 1
 func Register[T any](filePath string, options *Options) (*Table[T], error) {
 	var o T
 	typeOf := reflect.TypeOf(o)
-	if typeOf.Kind() == reflect.Ptr {
-		return nil, errors.New(ErrPointer)
-	}
 
 	// Gob will panic if you register the same object twice.
 	// I think this is stupid, so we will recover from this if

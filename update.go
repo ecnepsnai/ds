@@ -1,18 +1,12 @@
 package ds
 
 import (
-	"errors"
 	"reflect"
 
 	"go.etcd.io/bbolt"
 )
 
 func (table *Table[T]) update(o T) error {
-	if typeOf := reflect.TypeOf(o); typeOf.Kind() == reflect.Ptr {
-		table.log.Error("Refusing to update pointer from table")
-		return errors.New(ErrPointer)
-	}
-
 	// Check for an existing object, if nothing found then just add it and call it a day
 	primaryKeyBytes, err := table.primaryKeyBytes(o)
 	if err != nil {

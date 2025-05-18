@@ -3,7 +3,6 @@ package ds
 import (
 	"fmt"
 	"os"
-	"reflect"
 
 	"github.com/ecnepsnai/logtic"
 )
@@ -32,9 +31,6 @@ type MigrateParams[OldType any, NewType any] struct {
 }
 
 func (params *MigrateParams[OldType, NewType]) validate() error {
-	var oldT OldType
-	var newT NewType
-
 	if _, err := os.Stat(params.TablePath); err != nil {
 		return fmt.Errorf("%s: %s", ErrMigrateTablePathNotFound, err.Error())
 	}
@@ -43,12 +39,6 @@ func (params *MigrateParams[OldType, NewType]) validate() error {
 	}
 	if params.MigrateObject == nil {
 		return fmt.Errorf("%s: MigrateObject", ErrMissingRequiredValue)
-	}
-	if typeOf := reflect.TypeOf(oldT); typeOf.Kind() == reflect.Ptr {
-		return fmt.Errorf("%s: NewType", ErrPointer)
-	}
-	if typeOf := reflect.TypeOf(newT); typeOf.Kind() == reflect.Ptr {
-		return fmt.Errorf("%s: OldType", ErrPointer)
 	}
 
 	return nil
