@@ -3,7 +3,7 @@ module github.com/ecnepsnai/ds
 go 1.24
 
 require (
-	github.com/ecnepsnai/logtic v1.9.5
+	github.com/ecnepsnai/logtic v1.9.6
 	go.etcd.io/bbolt v1.4.0
 )
 
