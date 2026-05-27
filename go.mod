@@ -1,10 +1,10 @@
 module github.com/ecnepsnai/ds
 
-go 1.24
+go 1.25.0
 
 require (
-	github.com/ecnepsnai/logtic v1.9.5
-	go.etcd.io/bbolt v1.4.0
+	github.com/ecnepsnai/logtic v1.10.1
+	go.etcd.io/bbolt v1.4.3
 )
 
-require golang.org/x/sys v0.33.0 // indirect
+require golang.org/x/sys v0.45.0 // indirect

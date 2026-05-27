@@ -31,7 +31,7 @@ func (table *Table[T]) update(o T) error {
 			index = i
 		}
 
-		if err := table.deleteObject(tx, o); err != nil {
+		if err := table.deleteObject(tx, existing); err != nil {
 			return err
 		}
 		if err := table.addObject(tx, o); err != nil {

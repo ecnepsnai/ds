@@ -135,3 +135,67 @@ func TestUpdateManyNewValue(t *testing.T) {
 		return nil
 	})
 }
+
+func TestUpdateReuseUnique(t *testing.T) {
+	t.Parallel()
+
+	type exampleType struct {
+		Primary string `ds:"primary"`
+		Unique  string `ds:"unique"`
+	}
+
+	table, err := ds.Register[exampleType](path.Join(t.TempDir(), randomString(12)), nil)
+	if err != nil {
+		t.Errorf("Error registering table: %s", err.Error())
+	}
+
+	id := "1"
+	unique := randomString(6)
+
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
+		object := exampleType{
+			Primary: id,
+			Unique:  unique,
+		}
+
+		err = tx.Add(object)
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Error writing to table: %s", err.Error())
+	}
+
+	// Change the unique value to something else, freeing it for a new object to use
+	newUnique := randomString(6)
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
+		object, err := tx.Get(id)
+		if err != nil {
+			return err
+		}
+		object.Unique = newUnique
+		return tx.Update(*object)
+	})
+	if err != nil {
+		t.Fatalf("Error writing to table: %s", err.Error())
+	}
+
+	// Create an object with the previous unique value, which is free
+	err = table.StartWrite(func(tx ds.IReadWriteTransaction[exampleType]) error {
+		object := exampleType{
+			Primary: "2",
+			Unique:  unique,
+		}
+
+		err = tx.Add(object)
+		if err != nil {
+			t.Errorf("Error adding value to table: %s", err.Error())
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Error writing to table: %s", err.Error())
+	}
+}
