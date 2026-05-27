@@ -1,3 +1,15 @@
+# v1.9.1
+
+- [**Fixed**] Previously used unique values could not be re-used again.  
+  If you had an object that had one or more `ds:"unique"` tags on a field, the
+  initial value of that field when the object was added was persisted across
+  updates to the object. If the value was changed, the previous value could not
+  be re-used by a different object, even though it should have been.
+
+  This update fixes this bug for new data going forward, but does not fix
+  existing tables in-place. Performing a no-op migration will fix this issue for
+  existing tables.
+
 # v1.9.0
 
 **This Release Contains Major Breaking Changes to the DS API**
