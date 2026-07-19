@@ -1,3 +1,8 @@
+> [!CAUTION]
+> `github.com/ecnepsnai/ds` is deprecated and replaced by [git.ecn.io/ian/ds](https://git.ecn.io/ian/ds).
+> All users should migrate to `git.ecn.io/ian/ds` for continued updates. Tag v1.0.0 is drop-in compatible copy of the
+> last release of `github.com/ecnepsnai/ds`.
+
 # DS
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/ecnepsnai/ds?style=flat-square)](https://goreportcard.com/report/github.com/ecnepsnai/ds)
